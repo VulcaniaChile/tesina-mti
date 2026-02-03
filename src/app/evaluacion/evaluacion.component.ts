@@ -113,6 +113,11 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
+    if (!this.flujoAsignado) {
+      alert('Primero debes configurar un protocolo en Inicio para este paciente.');
+      return;
+    }
+
     // Cálculo básico de TMB (Tasa Metabólica Basal)
     const peso = parseFloat(this.paciente.peso);
     const altura = parseFloat(this.paciente.altura);
@@ -159,6 +164,11 @@ export class EvaluacionComponent implements OnInit {
   guardarPauta() {
     if (this.pautaNutricional.calorias === 0 || !this.pacienteSeleccionado) {
       alert('Primero debe calcular la pauta nutricional');
+      return;
+    }
+
+    if (!this.flujoAsignado) {
+      alert('Configura un protocolo en Inicio para este paciente antes de guardar la pauta.');
       return;
     }
 

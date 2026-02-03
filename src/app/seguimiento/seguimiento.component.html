@@ -18,7 +18,9 @@
           </button>
           <button *ngIf="pacienteSeleccionado" 
                   class="btn btn-success" 
-                  (click)="agregarSeguimiento()">
+              [disabled]="!flujoAsignado"
+              title="Configura un protocolo antes de registrar seguimientos"
+              (click)="agregarSeguimiento()">
             <i class="fas fa-plus me-1"></i>
             Nuevo Seguimiento
           </button>
@@ -171,7 +173,11 @@
           <div class="card border-warning">
             <div class="card-body text-center">
               <i class="fas fa-route fa-2x text-warning mb-2"></i>
-              <p class="mb-0">Asigna un flujo para poder validar tiempos y facilidad en la etapa de seguimiento.</p>
+              <p class="mb-1">Configura el protocolo en Inicio para poder registrar tiempos y facilidad del seguimiento.</p>
+              <a routerLink="/" [queryParams]="{ setupPatient: pacienteSeleccionado?.id }" class="btn btn-link btn-sm">
+                <i class="fas fa-route me-1"></i>
+                Configurar protocolo
+              </a>
             </div>
           </div>
         </ng-template>

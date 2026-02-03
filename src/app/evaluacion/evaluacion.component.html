@@ -131,7 +131,11 @@
         <div class="card border-warning">
           <div class="card-body text-center">
             <i class="fas fa-route fa-2x text-warning mb-2"></i>
-            <p class="mb-0">Asigna un flujo desde la sección de Pacientes para guiar esta evaluación y medir resultados.</p>
+            <p class="mb-1">Configura un protocolo desde Inicio antes de continuar con la evaluación.</p>
+            <a routerLink="/" class="btn btn-link btn-sm">
+              <i class="fas fa-route me-1"></i>
+              Configurar protocolo
+            </a>
           </div>
         </div>
       </ng-template>
@@ -175,7 +179,20 @@
             </div>
           </div>
 
-          <form class="row g-3" *ngIf="pacienteSeleccionado">
+          <div class="alert alert-warning" *ngIf="pacienteSeleccionado && !flujoAsignado">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+              <div>
+                <strong>Este paciente no tiene protocolo configurado.</strong>
+                <p class="mb-0 small">Configura el flujo en Inicio para registrar tiempos y compararlo en la validación.</p>
+              </div>
+              <a routerLink="/" [queryParams]="{ setupPatient: pacienteSeleccionado.id }" class="btn btn-outline-warning mt-2 mt-md-0">
+                <i class="fas fa-route me-1"></i>
+                Configurar ahora
+              </a>
+            </div>
+          </div>
+
+          <form class="row g-3" *ngIf="pacienteSeleccionado && flujoAsignado">
             <div class="col-12">
               <label class="form-label">Nombre completo</label>
               <input type="text" 
@@ -282,15 +299,15 @@
               <div class="d-grid gap-2">
                 <button type="button" 
                         class="btn btn-primary"
-                        (click)="calcularPauta()"
-                        [disabled]="!pacienteSeleccionado">
+                  (click)="calcularPauta()"
+                  [disabled]="!pacienteSeleccionado || !flujoAsignado">
                   <i class="fas fa-calculator me-2"></i>
                   {{ isAIEnabled ? 'Generar Pauta con IA' : 'Calcular Pauta' }}
                 </button>
                 <button type="button" 
                         class="btn btn-success"
                         (click)="guardarPauta()"
-                        [disabled]="pautaNutricional.calorias === 0">
+                  [disabled]="pautaNutricional.calorias === 0 || !flujoAsignado">
                   <i class="fas fa-save me-2"></i>
                   Guardar Pauta y Continuar
                 </button>

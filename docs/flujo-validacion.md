@@ -9,6 +9,27 @@ Definir, guiar y medir dos flujos diferenciados (Sin IA y Con IA) dentro del sis
 - **Mismo resultado esperado**: ambos flujos apuntan al mismo objetivo final (pauta mediterránea de 1800 kcal con menú sugerido). Esto permite comparar cuánto tarda cada modalidad en alcanzar el mismo entregable.
 - Los datos se cargan desde `localStorage` mediante `DataService.createFakeData()` y los flujos se asignan automáticamente desde `WorkflowService.seedScenarioAssignments()`.
 
+### Configuración previa del flujo
+- La asignación del protocolo ahora se realiza desde la pantalla de Inicio mediante un asistente paso a paso.
+- El wizard ahora solo solicita: paciente, protocolo (manual vs asistido) y etiqueta de iteración; el modo y el orden experimental se fijan automáticamente.
+- Sin esta configuración ningún módulo (Evaluación, Seguimiento) permite registrar cálculos o seguimientos; muestran advertencias con enlace directo al wizard.
+- Desde el listado de pacientes sólo se ofrece un acceso rápido que redirige al asistente; ya no se puede asignar el flujo ahí mismo, evitando inconsistencias.
+
+### Cohorte experimental expandida (mínimo 8 iteraciones)
+- Se añadieron seis pacientes demo adicionales (`pac_validacion_01` a `pac_validacion_06`) para acumular al menos 8 ejecuciones documentadas.
+- Cada iteración se ejecuta como dos corridas consecutivas: primero el flujo manual (control) y luego el asistido con IA (validación), sin necesidad de configurar nada adicional.
+- Sólo se registra `iteracionEtiqueta`; `ordenValidacion` se fuerza internamente al esquema `manual-ia` para mantener consistencia.
+
+| Iteración | Control (Manual) | Validación (IA) | Notas |
+| --- | --- | --- | --- |
+| Caso guía | Lucía Pérez (`pac_manual`) | Diego Torres (`pac_ia`) | Pareja base de referencia |
+| 01 | Camila Rojas (`pac_validacion_01`) | Javier Soto (`pac_validacion_02`) | Registro largo vs importación y menú autogenerado |
+| 02 | Valentina Muñoz (`pac_validacion_03`) | Tomás Contreras (`pac_validacion_04`) | Comparar menor autocompletado con ahorro operativo |
+| 03 | María José Silva (`pac_validacion_05`) | Felipe Araya (`pac_validacion_06`) | Enfoque en adherencia documentada vs confirmación profesional |
+
+- Cada iteración incorpora los dos primeros pasos ya completados para que el panel Analítico pueda comparar tiempos iniciales reales.
+- Se recomienda completar manualmente los pasos restantes y registrar la facilidad percibida inmediatamente después de cada actividad.
+
 ## 1. Plantillas de flujo prescrito
 - **Modelo `FlujoTrabajo`**: lista ordenada de pasos, criterios de éxito, tiempo estimado y tipo de modo (sin IA vs con IA).
 - **Catálogo de flujos**: pantalla para crear/editar plantillas (ej. "Protocolo Manual" y "Protocolo Asistido").
