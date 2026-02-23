@@ -255,11 +255,25 @@
 	}
 }
 
-.meal-suggestions-panel {
-	border: 2px solid #d1fae5;
-	border-radius: 12px;
-	padding: 1rem;
-	background: #f0fdf4;
+// Modal de sugerencias de menú
+#mealSuggestionsModal {
+	.modal-dialog {
+		max-width: 1200px;
+	}
+
+	.modal-content {
+		border: none;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+	}
+
+	.modal-header {
+		border-bottom: none;
+		padding: 1.25rem 1.5rem;
+	}
+
+	.modal-body {
+		padding: 1.5rem;
+	}
 
 	.suggestion-grid {
 		display: grid;
@@ -272,12 +286,18 @@
 		border-radius: 10px;
 		padding: 0.85rem;
 		background: #fff;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 	}
 
 	.suggestion-meal-header {
 		padding-bottom: 0.65rem;
 		border-bottom: 1px solid #e2e8f0;
 		margin-bottom: 0.75rem;
+
+		h6 {
+			color: #1e293b;
+			font-weight: 600;
+		}
 	}
 
 	.suggested-dishes {
@@ -313,5 +333,24 @@
 	.no-suggestions {
 		font-style: italic;
 		font-size: 0.85rem;
+	}
+}
+
+.modal-backdrop {
+	background-color: rgba(0, 0, 0, 0.5);
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1040;
+	
+	&.fade {
+		opacity: 0;
+		transition: opacity 0.15s linear;
+	}
+	
+	&.show {
+		opacity: 1;
 	}
 }

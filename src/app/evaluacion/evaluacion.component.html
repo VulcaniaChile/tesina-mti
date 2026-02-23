@@ -545,73 +545,82 @@
                 <span class="ms-2">{{ planCumpleMacros() ? 'Las porciones cumplen los macros diarios ±8%' : 'Ajusta las porciones para acercarte a los macros diarios' }}</span>
               </div>
             </div>
-
-            <!-- Panel de sugerencias de menú real -->
-            <div class="meal-suggestions-panel mt-4" *ngIf="showMealSuggestions && mealSuggestions.length > 0">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">
-                  <i class="fas fa-utensils text-success me-2"></i>
-                  Sugerencias de menú real
-                </h5>
-                <button class="btn btn-sm btn-outline-secondary" (click)="closeMealSuggestions()">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-
-              <div class="alert alert-info small">
-                <i class="fas fa-info-circle me-2"></i>
-                Basado en tu plan de porciones, sugerimos estos platos reales que mejor se ajustan a tus macros objetivo.
-              </div>
-
-              <div class="suggestion-grid">
-                <div class="suggestion-meal-card" *ngFor="let suggestion of mealSuggestions">
-                  <div class="suggestion-meal-header">
-                    <h6 class="mb-1">{{ suggestion.mealTimeName }}</h6>
-                    <small class="text-muted">
-                      Objetivo: {{ suggestion.targetCalorias }} kcal
-                    </small>
-                  </div>
-
-                  <div class="suggested-dishes" *ngIf="suggestion.suggestedMeals.length > 0">
-                    <div class="dish-item" *ngFor="let meal of suggestion.suggestedMeals">
-                      <div class="dish-info">
-                        <strong>{{ meal.nombre }}</strong>
-                        <small class="text-muted d-block">
-                          {{ meal.calorias }} kcal • 
-                          P: {{ meal.proteinas }}g • 
-                          C: {{ meal.carbohidratos }}g • 
-                          G: {{ meal.grasas }}g
-                        </small>
-                        <span class="badge badge-sm mt-1" [ngClass]="{
-                          'bg-success-subtle text-success': meal.macroDominante === 'proteina',
-                          'bg-warning-subtle text-warning': meal.macroDominante === 'carbohidrato',
-                          'bg-info-subtle text-info': meal.macroDominante === 'grasa'
-                        }">
-                          {{ meal.porcionGramos }}g • {{ meal.origen }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="no-suggestions text-muted text-center py-3" *ngIf="suggestion.suggestedMeals.length === 0">
-                    <small>No se encontraron platos que coincidan con este tiempo de comida</small>
-                  </div>
-
-                  <div class="suggestion-totals mt-2">
-                    <small class="text-muted">
-                      <strong>Totales sugeridos:</strong> 
-                      {{ suggestion.totalCalorias }} kcal • 
-                      P: {{ suggestion.totalProteinas | number:'1.0-1' }}g • 
-                      C: {{ suggestion.totalCarbohidratos | number:'1.0-1' }}g • 
-                      G: {{ suggestion.totalGrasas | number:'1.0-1' }}g
-                    </small>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
   </ng-container>
+
+  <!-- Modal de sugerencias de menú real -->
+  <div class="modal fade" id="mealSuggestionsModal" tabindex="-1" aria-labelledby="mealSuggestionsModalLabel" aria-hidden="true" [class.show]="showMealSuggestions" [style.display]="showMealSuggestions ? 'block' : 'none'">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="mealSuggestionsModalLabel">
+            <i class="fas fa-utensils me-2"></i>
+            Sugerencias de menú real
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeMealSuggestions()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Basado en tu plan de porciones, sugerimos estos platos reales que mejor se ajustan a tus macros objetivo.
+          </div>
+
+          <div class="suggestion-grid">
+            <div class="suggestion-meal-card" *ngFor="let suggestion of mealSuggestions">
+              <div class="suggestion-meal-header">
+                <h6 class="mb-1">{{ suggestion.mealTimeName }}</h6>
+                <small class="text-muted">
+                  Objetivo: {{ suggestion.targetCalorias }} kcal
+                </small>
+              </div>
+
+              <div class="suggested-dishes" *ngIf="suggestion.suggestedMeals.length > 0">
+                <div class="dish-item" *ngFor="let meal of suggestion.suggestedMeals">
+                  <div class="dish-info">
+                    <strong>{{ meal.nombre }}</strong>
+                    <small class="text-muted d-block">
+                      {{ meal.calorias }} kcal • 
+                      P: {{ meal.proteinas }}g • 
+                      C: {{ meal.carbohidratos }}g • 
+                      G: {{ meal.grasas }}g
+                    </small>
+                    <span class="badge badge-sm mt-1" [ngClass]="{
+                      'bg-success-subtle text-success': meal.macroDominante === 'proteina',
+                      'bg-warning-subtle text-warning': meal.macroDominante === 'carbohidrato',
+                      'bg-info-subtle text-info': meal.macroDominante === 'grasa'
+                    }">
+                      {{ meal.porcionGramos }}g • {{ meal.origen }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="no-suggestions text-muted text-center py-3" *ngIf="suggestion.suggestedMeals.length === 0">
+                <small>No se encontraron platos que coincidan con este tiempo de comida</small>
+              </div>
+
+              <div class="suggestion-totals mt-2">
+                <small class="text-muted">
+                  <strong>Totales sugeridos:</strong> 
+                  {{ suggestion.totalCalorias }} kcal • 
+                  P: {{ suggestion.totalProteinas | number:'1.0-1' }}g • 
+                  C: {{ suggestion.totalCarbohidratos | number:'1.0-1' }}g • 
+                  G: {{ suggestion.totalGrasas | number:'1.0-1' }}g
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeMealSuggestions()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backdrop del modal -->
+  <div class="modal-backdrop fade" [class.show]="showMealSuggestions" *ngIf="showMealSuggestions" (click)="closeMealSuggestions()"></div>
 </div>

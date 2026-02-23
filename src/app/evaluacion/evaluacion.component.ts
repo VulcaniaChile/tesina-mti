@@ -564,7 +564,9 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
+    console.log('Plan de comidas:', this.dailyMealPlan.meals);
     this.mealSuggestions = this.mealCatalogService.suggestFullMenu(this.dailyMealPlan.meals);
+    console.log('Sugerencias generadas:', this.mealSuggestions);
     this.showMealSuggestions = true;
   }
 

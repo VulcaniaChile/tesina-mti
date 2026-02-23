@@ -9,7 +9,9 @@ import mealCatalog from '../data/meal-recipes.json';
 export class MealCatalogService {
   private meals: RealMeal[] = mealCatalog as RealMeal[];
 
-  constructor() {}
+  constructor() {
+    console.log('Catálogo de comidas cargado:', this.meals.length, 'platos');
+  }
 
   /**
    * Obtiene todos los platos del catálogo
@@ -22,9 +24,11 @@ export class MealCatalogService {
    * Filtra platos por tiempo de comida
    */
   getMealsByTime(mealTime: string): RealMeal[] {
-    return this.meals.filter(meal => 
+    const filtered = this.meals.filter(meal => 
       meal.tiemposAptos.includes(mealTime as any)
     );
+    console.log(`Platos disponibles para ${mealTime}:`, filtered.length);
+    return filtered;
   }
 
   /**
@@ -60,7 +64,13 @@ export class MealCatalogService {
     const targetMacros = this.calculateTargetMacros(mealTimePlan);
     const availableMeals = this.getMealsByTime(mealTimePlan.id);
 
+    console.log(`Sugerencias para ${mealTimePlan.id}:`, {
+      targetMacros,
+      availableMealsCount: availableMeals.length
+    });
+
     if (targetMacros.calorias === 0 || availableMeals.length === 0) {
+      console.log('Sin macros o sin platos disponibles para este tiempo');
       return [];
     }
 
@@ -72,10 +82,14 @@ export class MealCatalogService {
 
     // Ordenar por score descendente y tomar los mejores 3
     // (no filtrar por score > 0 para asegurar que siempre haya sugerencias si hay platos disponibles)
-    return scored
+    const results = scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 3)
       .map(item => item.meal);
+
+    console.log(`Top 3 sugerencias para ${mealTimePlan.id}:`, results.map(m => m.nombre));
+
+    return results;
   }
 
   /**
