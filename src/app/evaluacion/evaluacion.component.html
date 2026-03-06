@@ -390,6 +390,10 @@
             <i class="fas fa-robot me-1"></i>
             Sugerir pauta
           </button>
+          <button class="btn btn-outline-info btn-sm" *ngIf="isAIEnabled" (click)="distribuirMacrosIA()" [disabled]="!pautaNutricional.calorias">
+            <i class="fas fa-sliders-h me-1"></i>
+            Distribuir macros IA
+          </button>
           <button class="btn btn-success btn-sm" (click)="sugerirMenuReal()" [disabled]="!planTienePorciones()">
             <i class="fas fa-utensils me-1"></i>
             Sugerir menú real
@@ -399,12 +403,10 @@
       <div class="card-body">
         <div class="row">
           <div class="col-lg-4 border-end">
-            <h6 class="text-muted mb-3">Porciones de macro</h6>
-            <p class="text-muted small">Arrastra una ficha para sumar 1 porción. Dentro de cada comida puedes ajustar la cantidad con los botones ±.</p>
+            <h6 class="text-muted mb-3">Porciones base</h6>
+            <p class="text-muted small">Define cuántos gramos representa cada macro. Estos valores se aplican al distribuir los macros en cada comida.</p>
             <div class="portion-card"
-                 *ngFor="let portion of availablePortions"
-                 draggable="true"
-                 (dragstart)="onPortionDragStart($event, portion.id)">
+                 *ngFor="let portion of availablePortions">
               <div class="macro-card-header">
                 <h5 class="mb-1">{{ portion.label | uppercase }}</h5>
                 <span class="badge" [ngClass]="{
@@ -444,7 +446,7 @@
                 <small class="text-muted">Equivale a {{ portion.calorias }} kcal</small>
               </div>
             </div>
-            <p class="text-muted fst-italic small mt-3">Tip: Arrastra porciones o usa "Duplicar" dentro de cada comida para sumar mas porciones del mismo macro.</p>
+            <p class="text-muted fst-italic small mt-3">Tip: Ajusta los sliders de cada comida para repartir rápidamente las porciones.</p>
           </div>
           <div class="col-lg-8 mt-4 mt-lg-0">
             <div class="meal-grid">
@@ -453,64 +455,59 @@
                   <h6 class="mb-0">{{ meal.title }}</h6>
                   <small class="text-muted">{{ getMealTotals(meal.id).calorias }} kcal</small>
                 </div>
-                <div class="meal-dropzone"
-                     (dragover)="allowDrop($event)"
-                     (drop)="onDropPortion($event, meal.id)">
-                  <p class="placeholder" *ngIf="meal.portions.length === 0">
-                    Arrastra porciones aqui
-                  </p>
-                  <div class="meal-portion-card" *ngFor="let portion of meal.portions">
-                    <div class="meal-portion-header">
-                      <strong>{{ portion.label }}</strong>
+                <ng-container *ngFor="let macro of macroOrder">
+                  <div class="meal-portion-card macro-slider-card" *ngIf="getMacroTotalsForMeal(meal.id, macro) as macroTotals">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <strong>{{ getMacroLabel(macro) | titlecase }}</strong>
+                        <small class="d-block text-muted">1 porción = {{ getMacroUnitGrams(macro) }}g · {{ getMacroUnitCalories(macro) }} kcal</small>
+                      </div>
                       <span class="badge" [ngClass]="{
-                        'bg-success-subtle border border-success text-success': portion.macroDominante === 'proteina',
-                        'bg-warning-subtle border border-warning text-warning': portion.macroDominante === 'carbohidrato',
-                        'bg-info-subtle border border-info text-info': portion.macroDominante === 'grasa'
+                        'bg-success-subtle border border-success text-success': macro === 'proteina',
+                        'bg-warning-subtle border border-warning text-warning': macro === 'carbohidrato',
+                        'bg-info-subtle border border-info text-info': macro === 'grasa'
                       }">
-                        {{ portion.macroDominante | titlecase }}
+                        {{ macro | titlecase }}
                       </span>
                     </div>
-                    <p class="small mb-1 text-muted">
-                      {{ getDominantGramsDisplay(portion) }}g {{ getMacroLabel(portion.macroDominante) }} · {{ portion.calorias }} kcal
-                    </p>
-                    <div class="macro-slider">
-                      <label class="small text-muted">Editar gramos de {{ getMacroLabel(portion.macroDominante) }}</label>
+                    <div class="macro-slider mt-2">
+                      <label class="small text-muted">Porciones asignadas</label>
                       <div class="d-flex align-items-center gap-2">
                         <input
                           type="range"
                           class="form-range"
                           min="0"
-                          max="100"
+                          max="6"
                           step="1"
-                          [ngModel]="getDominantGramsDisplay(portion)"
-                          (ngModelChange)="onAssignedPortionGramsChange(portion, $event)"
+                          [ngModel]="macroTotals.units"
+                          (ngModelChange)="onMealMacroSliderChange(meal.id, macro, $event)"
                         />
-                        <span class="macro-grams">
-                        {{ getDominantGramsDisplay(portion) }}g
-                        </span>
                         <input
                           type="number"
                           class="form-control form-control-sm macro-grams-input"
                           min="0"
-                          max="100"
+                          max="6"
                           step="1"
-                          [ngModel]="getDominantGramsDisplay(portion)"
-                          (ngModelChange)="onAssignedPortionGramsChange(portion, $event)"
+                          [ngModel]="macroTotals.units"
+                          (ngModelChange)="onMealMacroSliderChange(meal.id, macro, $event)"
                         />
                       </div>
-                      <small class="text-muted">Equivale a {{ portion.calorias }} kcal</small>
                     </div>
-                    <div class="meal-portion-actions">
-                      <button class="btn btn-sm btn-outline-secondary" (click)="duplicatePortion(meal.id, portion)" aria-label="Duplicar porcion">
-                        <i class="fas fa-clone me-1"></i>
-                        Duplicar
-                      </button>
-                      <button class="btn btn-sm btn-link text-danger" (click)="removePortion(meal.id, portion.instanceId)" aria-label="Eliminar porcion">
-                        <i class="fas fa-times"></i>
-                      </button>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2">
+                      <small class="text-muted mb-0">Total: {{ macroTotals.grams }}g · {{ macroTotals.calorias }} kcal</small>
+                      <div class="btn-group btn-group-sm" role="group" aria-label="Presets de porciones">
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary"
+                          *ngFor="let preset of macroQuickPresets"
+                          [class.active]="macroTotals.units === preset"
+                          (click)="applyMacroPreset(meal.id, macro, preset)">
+                          {{ preset }}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </ng-container>
               </div>
             </div>
             <div class="macro-summary mt-4">

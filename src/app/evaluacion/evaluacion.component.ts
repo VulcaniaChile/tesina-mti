@@ -28,6 +28,8 @@ import { MealCatalogService } from '../services/meal-catalog.service';
   styleUrl: './evaluacion.component.scss'
 })
 export class EvaluacionComponent implements OnInit {
+  // Expone Math para poder usar Math.abs desde la plantilla
+  readonly Math = Math;
   isAIEnabled = false;
   pacienteSeleccionado: Paciente | null = null;
   pacientes: Paciente[] = [];
@@ -92,12 +94,20 @@ export class EvaluacionComponent implements OnInit {
 
   portionGrams: Record<string, number> = {};
 
-  private macroOrder: MealPortion['macroDominante'][] = ['proteina', 'carbohidrato', 'grasa'];
+  macroOrder: MealPortion['macroDominante'][] = ['proteina', 'carbohidrato', 'grasa'];
   private macroPortionMap: Record<MealPortion['macroDominante'], string> = {
     proteina: 'macro-proteina',
     carbohidrato: 'macro-carbo',
     grasa: 'macro-grasa',
     mixto: 'macro-carbo'
+  };
+  macroQuickPresets = [0, 1, 2, 3];
+  private mealMacroDistribution: Record<string, { proteina: number; carbohidrato: number; grasa: number }> = {
+    desayuno: { proteina: 0.25, carbohidrato: 0.3, grasa: 0.2 },
+    media_manana: { proteina: 0.15, carbohidrato: 0.15, grasa: 0.1 },
+    almuerzo: { proteina: 0.3, carbohidrato: 0.3, grasa: 0.3 },
+    colacion: { proteina: 0.1, carbohidrato: 0.1, grasa: 0.15 },
+    cena: { proteina: 0.2, carbohidrato: 0.15, grasa: 0.25 }
   };
 
   dailyMealPlan: DailyMealPlan = this.buildEmptyDailyPlan();
@@ -326,24 +336,6 @@ export class EvaluacionComponent implements OnInit {
     this.currentStep = 1;
   }
 
-  onPortionDragStart(event: DragEvent, portionId: string) {
-    event.dataTransfer?.setData('text/plain', portionId);
-    event.dataTransfer?.setDragImage((event.target as HTMLElement) || document.body, 0, 0);
-  }
-
-  allowDrop(event: DragEvent) {
-    event.preventDefault();
-  }
-
-  onDropPortion(event: DragEvent, mealId: string) {
-    event.preventDefault();
-    const portionId = event.dataTransfer?.getData('text/plain');
-    if (!portionId) {
-      return;
-    }
-    this.agregarPorcionAMeal(portionId, mealId);
-  }
-
   getMealTotals(mealId: string) {
     const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
     if (!meal) {
@@ -398,62 +390,80 @@ export class EvaluacionComponent implements OnInit {
       .map(macro => ({ macro, ...summary[macro] }));
   }
 
-  incrementMacro(mealId: string, macro: MealPortion['macroDominante']) {
+  getMacroUnitsForMeal(mealId: string, macro: MealPortion['macroDominante']): number {
+    const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
+    if (!meal) {
+      return 0;
+    }
+    return meal.portions
+      .filter(portion => portion.macroDominante === macro)
+      .reduce((sum, portion) => sum + (portion.units || 1), 0);
+  }
+
+  onMealMacroSliderChange(mealId: string, macro: MealPortion['macroDominante'], rawValue: number | string) {
+    this.setMacroUnitsForMeal(mealId, macro, Number(rawValue));
+  }
+
+  applyMacroPreset(mealId: string, macro: MealPortion['macroDominante'], presetUnits: number) {
+    this.setMacroUnitsForMeal(mealId, macro, presetUnits);
+  }
+
+  getMacroUnitGrams(macro: MealPortion['macroDominante']): number {
+    const base = this.getBasePortionForMacro(macro);
+    return base ? this.getDominantGramsValue(base) : 0;
+  }
+
+  getMacroUnitCalories(macro: MealPortion['macroDominante']): number {
+    const base = this.getBasePortionForMacro(macro);
+    return base ? base.calorias : 0;
+  }
+
+  getMacroTotalsForMeal(mealId: string, macro: MealPortion['macroDominante']) {
+    const units = this.getMacroUnitsForMeal(mealId, macro);
+    const grams = units * this.getMacroUnitGrams(macro);
+    const calorias = units * this.getMacroUnitCalories(macro);
+    return { units, grams, calorias };
+  }
+
+  private setMacroUnitsForMeal(mealId: string, macro: MealPortion['macroDominante'], units: number) {
+    const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
+    if (!meal) {
+      return;
+    }
+
+    const targetUnits = this.clampMacroUnits(units);
+    const currentUnits = this.getMacroUnitsForMeal(mealId, macro);
+    if (targetUnits === currentUnits) {
+      return;
+    }
+
+    meal.portions = meal.portions.filter(portion => portion.macroDominante !== macro);
+    const basePortionId = this.macroPortionMap[macro];
+    if (!basePortionId) {
+      return;
+    }
+
+    for (let i = 0; i < targetUnits; i++) {
+      this.agregarPorcionAMeal(basePortionId, mealId);
+    }
+  }
+
+  private getBasePortionForMacro(macro: MealPortion['macroDominante']): MealPortion | undefined {
     const portionId = this.macroPortionMap[macro];
-    if (!portionId) {
-      return;
-    }
-    this.agregarPorcionAMeal(portionId, mealId);
+    return this.availablePortions.find(portion => portion.id === portionId);
   }
 
-  decrementMacro(mealId: string, macro: MealPortion['macroDominante']) {
-    const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
-    if (!meal) {
-      return;
+  private clampMacroUnits(value: number | string): number {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return 0;
     }
-    const target = meal.portions.find(p => p.macroDominante === macro);
-    if (!target) {
-      return;
-    }
-    if (target.units > 1) {
-      target.units -= 1;
-    } else {
-      meal.portions = meal.portions.filter(p => p.instanceId !== target.instanceId);
-    }
-  }
-
-  clearMacro(mealId: string, macro: MealPortion['macroDominante']) {
-    const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
-    if (!meal) {
-      return;
-    }
-    meal.portions = meal.portions.filter(p => p.macroDominante !== macro);
-  }
-
-  duplicatePortion(mealId: string, portion: MealPortionAssignment) {
-    const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
-    if (!meal) {
-      return;
-    }
-    meal.portions = [...meal.portions, this.clonePortion(portion)];
-  }
-
-  removePortion(mealId: string, instanceId: string) {
-    const meal = this.dailyMealPlan.meals.find(m => m.id === mealId);
-    if (!meal) {
-      return;
-    }
-    meal.portions = meal.portions.filter(p => p.instanceId !== instanceId);
+    return Math.max(0, Math.min(6, Math.round(numeric)));
   }
 
   onPortionGramsChange(portion: MealPortion, gramsValue: number) {
     const grams = this.clampGrams(Number(gramsValue));
     this.portionGrams[portion.id] = grams;
-    this.applyDominantGrams(portion, grams);
-  }
-
-  onAssignedPortionGramsChange(portion: MealPortionAssignment, gramsValue: number) {
-    const grams = this.clampGrams(Number(gramsValue));
     this.applyDominantGrams(portion, grams);
   }
 
@@ -558,6 +568,47 @@ export class EvaluacionComponent implements OnInit {
     });
   }
 
+  distribuirMacrosIA() {
+    if (!this.isAIEnabled) {
+      return;
+    }
+    if (!this.pautaNutricional.calorias) {
+      alert('Calcula los macros diarios antes de distribuirlos.');
+      return;
+    }
+
+    this.resetMealPlan();
+
+    const macroTargets: Record<'proteina' | 'carbohidrato' | 'grasa', number> = {
+      proteina: this.pautaNutricional.proteinas,
+      carbohidrato: this.pautaNutricional.carbohidratos,
+      grasa: this.pautaNutricional.grasas
+    };
+
+    (['proteina', 'carbohidrato', 'grasa'] as const).forEach(macro => {
+      const basePortionId = this.macroPortionMap[macro];
+      const portionTemplate = this.availablePortions.find(p => p.id === basePortionId);
+      const gramsPerPortion = portionTemplate ? this.getDominantGramsValue(portionTemplate) : 0;
+      if (!portionTemplate || gramsPerPortion === 0) {
+        return;
+      }
+
+      const totalPortionsNeeded = Math.max(0, Math.round(macroTargets[macro] / gramsPerPortion));
+      if (totalPortionsNeeded === 0) {
+        return;
+      }
+
+      const weightMap = this.buildMacroWeightMap(macro);
+      const distribution = this.distributePortionsAcrossMeals(totalPortionsNeeded, weightMap);
+
+      Object.entries(distribution).forEach(([mealId, count]) => {
+        for (let i = 0; i < count; i++) {
+          this.agregarPorcionAMeal(basePortionId, mealId);
+        }
+      });
+    });
+  }
+
   sugerirMenuReal() {
     if (!this.planTienePorciones()) {
       alert('Primero arma el plan de macros arrastrando porciones o usando "Sugerir pauta"');
@@ -576,6 +627,49 @@ export class EvaluacionComponent implements OnInit {
 
   closeMealSuggestions() {
     this.showMealSuggestions = false;
+  }
+
+  private buildMacroWeightMap(macro: 'proteina' | 'carbohidrato' | 'grasa'): Record<string, number> {
+    const map: Record<string, number> = {};
+    this.dailyMealPlan.meals.forEach(meal => {
+      const preset = this.mealMacroDistribution[meal.id];
+      map[meal.id] = preset ? preset[macro] : 0;
+    });
+    const totalWeight = Object.values(map).reduce((sum, value) => sum + value, 0);
+    if (totalWeight === 0 && this.dailyMealPlan.meals.length) {
+      const equalShare = 1 / this.dailyMealPlan.meals.length;
+      this.dailyMealPlan.meals.forEach(meal => {
+        map[meal.id] = equalShare;
+      });
+    }
+    return map;
+  }
+
+  private distributePortionsAcrossMeals(totalPortions: number, weights: Record<string, number>): Record<string, number> {
+    const result: Record<string, number> = {};
+    const entries = Object.entries(weights);
+    if (!entries.length || totalPortions <= 0) {
+      return result;
+    }
+
+    let assigned = 0;
+    entries.forEach(([mealId, weight]) => {
+      const portionCount = weight > 0 ? Math.floor(totalPortions * weight) : 0;
+      result[mealId] = portionCount;
+      assigned += portionCount;
+    });
+
+    let remaining = totalPortions - assigned;
+    const sorted = [...entries].sort((a, b) => b[1] - a[1]);
+    let index = 0;
+    while (remaining > 0 && sorted.length) {
+      const mealId = sorted[index % sorted.length][0];
+      result[mealId] = (result[mealId] || 0) + 1;
+      remaining -= 1;
+      index += 1;
+    }
+
+    return result;
   }
 
   private buildEmptyDailyPlan(): DailyMealPlan {
