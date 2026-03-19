@@ -275,7 +275,7 @@ export class WorkflowService {
       asignacion.pasoActualId = siguiente ? siguiente.id : null;
       if (completados.length === pasosOrdenados.length) {
         asignacion.estado = 'completado';
-        asignacion.resultado = this.calcularResultado(asignacion);
+          asignacion.resultado = this.calcularResultado(asignacion, flujo);
         this.dataService.marcarFlujoCompletado(asignacion.pacienteId, asignacion.flujoId);
       }
     }
@@ -314,11 +314,21 @@ export class WorkflowService {
     return resumen;
   }
 
-  private calcularResultado(asignacion: FlujoAsignado): FlujoResultado {
+  private calcularResultado(asignacion: FlujoAsignado, flujo?: FlujoTrabajo): FlujoResultado {
     const tiempos = asignacion.ejecucion.map(e => e.tiempoMinutos || 0);
     const facilidades = asignacion.ejecucion
       .filter(e => typeof e.facilidad === 'number')
       .map(e => e.facilidad as number);
+    const camposAutocompletadosTotal = asignacion.ejecucion.reduce(
+      (sum, paso) => sum + (paso.camposAutocompletados || 0),
+      0
+    );
+    const camposManualesTotal = asignacion.ejecucion.reduce(
+      (sum, paso) => sum + (paso.camposManuales || 0),
+      0
+    );
+    const pasosCompletados = asignacion.ejecucion.filter(e => e.fin).length;
+    const totalPasos = flujo?.pasos.length ?? asignacion.ejecucion.length;
 
     const tiempoTotalMin = tiempos.reduce((sum, val) => sum + val, 0);
     const facilidadPromedio = facilidades.length > 0
@@ -328,6 +338,10 @@ export class WorkflowService {
     return {
       tiempoTotalMin,
       facilidadPromedio
+      camposAutocompletadosTotal,
+      camposManualesTotal,
+      pasosCompletados,
+      totalPasos
     };
   }
 

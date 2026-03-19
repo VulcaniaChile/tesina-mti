@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ScenarioService, ScenarioDefinition, ScenarioState } from '../../services/scenario.service';
+import { ScenarioService, ScenarioDefinition, ScenarioState, ScenarioRunSummary } from '../../services/scenario.service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -18,6 +18,7 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
   visitId: string | null = null;
   completedVisits: string[] = [];
   loading = true;
+  summaries: ScenarioRunSummary[] = [];
   private lastVisitRoute: string | null = null;
 
   @Output() scenarioChange = new EventEmitter<boolean>();
@@ -47,6 +48,11 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
           this.navigateToCurrentVisit();
         }
         this.loading = false;
+      }),
+      this.scenarioService.scenarioSummaries$.subscribe(records => {
+        this.summaries = Object.values(records)
+          .filter((summary): summary is ScenarioRunSummary => !!summary)
+          .sort((a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime());
       })
     );
   }
@@ -110,5 +116,9 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     }
     this.lastVisitRoute = route;
     this.router.navigate(['/', route]);
+  }
+
+  get hasSummaries(): boolean {
+    return this.summaries.length > 0;
   }
 }

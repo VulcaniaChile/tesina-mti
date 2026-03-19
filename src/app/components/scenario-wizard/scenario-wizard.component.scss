@@ -197,3 +197,125 @@
     color: #475569;
   }
 }
+
+.scenario-results {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.result-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.result-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-mode {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #ececec;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.result-mode.mode-ai {
+  background: rgba(0, 123, 255, 0.15);
+  color: #0054b3;
+}
+
+.result-patient {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.result-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.95rem;
+  }
+}
+
+.result-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.result-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.progress {
+  background: #edf2f7;
+  border-radius: 999px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #22d3ee, #3b82f6);
+  height: 100%;
+  border-radius: inherit;
+}
+
+.result-visits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.visit-pill {
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-size: 0.7rem;
+  color: #0f172a;
+}

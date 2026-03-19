@@ -139,6 +139,10 @@ export interface FlujoResultado {
   satisfaccionPaciente?: number;
   satisfaccionProfesional?: number;
   observaciones?: string;
+  camposAutocompletadosTotal?: number;
+  camposManualesTotal?: number;
+  pasosCompletados?: number;
+  totalPasos?: number;
 }
 
 export type OrdenValidacion = 'manual-primero' | 'ia-primero';

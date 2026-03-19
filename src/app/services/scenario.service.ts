@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { VersionMode, ScenarioPatientPreset, OrdenValidacion, FlujoTrabajo } from '../models/nutricion.models';
+import { VersionMode, ScenarioPatientPreset, OrdenValidacion, FlujoTrabajo, FlujoAsignado } from '../models/nutricion.models';
 import { DataService } from './data.service';
 import { WorkflowService } from './workflow.service';
 
@@ -36,12 +36,29 @@ export interface ActiveScenarioProgress {
   startedAt: string;
 }
 
+export interface ScenarioRunSummary {
+  scenarioId: ScenarioId;
+  scenarioTitle: string;
+  patientId: string;
+  patientName: string;
+  mode: VersionMode;
+  completedVisits: string[];
+  finishedAt: string;
+  tiempoTotalMin?: number;
+  facilidadPromedio?: number;
+  camposAutocompletados?: number;
+  camposManuales?: number;
+  stepsCompleted: number;
+  totalSteps: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ScenarioService {
   private readonly STORAGE_STATE = 'scenario_states';
   private readonly STORAGE_PROGRESS = 'scenario_progress';
+  private readonly STORAGE_SUMMARIES = 'scenario_summaries';
 
   private readonly scenarios: ScenarioDefinition[] = [
     {
@@ -128,6 +145,9 @@ export class ScenarioService {
   private activeProgressSubject = new BehaviorSubject<ActiveScenarioProgress | null>(this.loadProgress());
   activeProgress$ = this.activeProgressSubject.asObservable();
 
+  private scenarioSummariesSubject = new BehaviorSubject<Record<ScenarioId, ScenarioRunSummary | null>>(this.loadScenarioSummaries());
+  scenarioSummaries$ = this.scenarioSummariesSubject.asObservable();
+
   constructor(private dataService: DataService, private workflowService: WorkflowService) {
     this.workflowService.asignaciones$.subscribe(() => {
       this.syncProgressWithWorkflow();
@@ -198,6 +218,7 @@ export class ScenarioService {
     const defaults = this.getDefaultStates();
     this.persistStates(defaults);
     this.persistProgress(null);
+    this.persistSummaries(this.getSummaryDefaults());
     try {
       localStorage.removeItem(`${this.STORAGE_PROGRESS}_history`);
     } catch (error) {
@@ -214,7 +235,7 @@ export class ScenarioService {
         scenario.mode,
         {
           ordenValidacion: orden,
-          iteracionEtiqueta: `${scenario.patientName} · ${scenario.mode === 'con-ia' ? 'Con IA' : 'Sin IA'}`,
+          iteracionEtiqueta: `${scenario.id} · ${scenario.patientName} · ${scenario.mode === 'con-ia' ? 'Con IA' : 'Sin IA'}`,
           responsable: 'Scenario Wizard',
           forceReassign: true
         }
@@ -286,6 +307,7 @@ export class ScenarioService {
   }
 
   private finishScenario(id: ScenarioId, completedVisits: string[]): void {
+    const scenario = this.getScenario(id);
     const states = { ...this.scenarioStatesSubject.value };
     states[id] = 'completed';
     this.persistStates(states);
@@ -298,6 +320,7 @@ export class ScenarioService {
       finishedAt: new Date().toISOString()
     });
     this.saveToStorage(summaryKey, history);
+    this.captureScenarioSummary(scenario, completedVisits);
   }
 
   private buildStandardVisits(mode: VersionMode): ScenarioVisit[] {
@@ -400,6 +423,26 @@ export class ScenarioService {
     return this.loadFromStorage(this.STORAGE_PROGRESS, null);
   }
 
+  private loadScenarioSummaries(): Record<ScenarioId, ScenarioRunSummary | null> {
+    const defaults = this.getSummaryDefaults();
+    const stored = this.loadFromStorage<Record<ScenarioId, ScenarioRunSummary | null>>(this.STORAGE_SUMMARIES, defaults);
+    return { ...defaults, ...stored };
+  }
+
+  private getSummaryDefaults(): Record<ScenarioId, ScenarioRunSummary | null> {
+    return {
+      A1: null,
+      A2: null,
+      B1: null,
+      B2: null
+    };
+  }
+
+  private persistSummaries(summaries: Record<ScenarioId, ScenarioRunSummary | null>) {
+    this.scenarioSummariesSubject.next(summaries);
+    this.saveToStorage(this.STORAGE_SUMMARIES, summaries);
+  }
+
   private persistProgress(progress: ActiveScenarioProgress | null) {
     this.activeProgressSubject.next(progress);
     if (progress) {
@@ -428,5 +471,36 @@ export class ScenarioService {
     } catch (error) {
       console.error('Error saving scenario data', error);
     }
+  }
+
+  private captureScenarioSummary(scenario: ScenarioDefinition, completedVisits: string[]) {
+    const assignments = this.workflowService.getAsignacionesByPaciente(scenario.patientId)
+      .filter(a => a.flujoId === scenario.flujoId && a.estado === 'completado');
+    const latestAssignment = assignments
+      .sort((a, b) => new Date(b.fechaAsignacion).getTime() - new Date(a.fechaAsignacion).getTime())[0];
+
+    const finishedAt = latestAssignment?.ejecucion
+      .filter(e => e.fin)
+      .map(e => new Date(e.fin as string).getTime())
+      .sort((a, b) => b - a)[0];
+
+    const summary: ScenarioRunSummary = {
+      scenarioId: scenario.id,
+      scenarioTitle: scenario.title,
+      patientId: scenario.patientId,
+      patientName: scenario.patientName,
+      mode: scenario.mode,
+      completedVisits,
+      finishedAt: finishedAt ? new Date(finishedAt).toISOString() : new Date().toISOString(),
+      tiempoTotalMin: latestAssignment?.resultado?.tiempoTotalMin,
+      facilidadPromedio: latestAssignment?.resultado?.facilidadPromedio,
+      camposAutocompletados: latestAssignment?.resultado?.camposAutocompletadosTotal,
+      camposManuales: latestAssignment?.resultado?.camposManualesTotal,
+      stepsCompleted: latestAssignment?.resultado?.pasosCompletados ?? completedVisits.length,
+      totalSteps: latestAssignment?.resultado?.totalPasos ?? scenario.visits.length
+    };
+
+    const updated = { ...this.scenarioSummariesSubject.value, [scenario.id]: summary };
+    this.persistSummaries(updated);
   }
 }

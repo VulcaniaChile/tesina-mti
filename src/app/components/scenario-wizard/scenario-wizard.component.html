@@ -41,6 +41,55 @@
         <div>
           <p class="label">Flujo en curso</p>
           <h5>{{ currentScenario?.title }}</h5>
+
+    <div class="scenario-results" *ngIf="hasSummaries">
+      <div class="results-header">
+        <div>
+          <h5>Resultados recientes</h5>
+          <p class="text-muted mb-0">Métricas capturadas automáticamente tras completar cada escenario.</p>
+        </div>
+        <small class="text-muted">Los datos se reinician al limpiar el asistente.</small>
+      </div>
+      <div class="results-grid">
+        <div class="result-card" *ngFor="let summary of summaries">
+          <div class="result-card-header">
+            <span class="result-mode" [class.mode-ai]="summary.mode === 'con-ia'">
+              {{ summary.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}
+            </span>
+            <small class="text-muted">{{ summary.finishedAt | date:'dd/MM · HH:mm' }}</small>
+          </div>
+          <h6>{{ summary.scenarioTitle }}</h6>
+          <p class="result-patient">{{ summary.patientName }}</p>
+          <div class="result-metrics">
+            <div>
+              <span class="label">Tiempo total</span>
+              <strong>{{ summary.tiempoTotalMin ? (summary.tiempoTotalMin | number:'1.0-1') + ' min' : '–' }}</strong>
+            </div>
+            <div>
+              <span class="label">Facilidad</span>
+              <strong>{{ summary.facilidadPromedio ? (summary.facilidadPromedio | number:'1.0-1') : '–' }}</strong>
+            </div>
+            <div>
+              <span class="label">Auto / Manual</span>
+              <strong>{{ summary.camposAutocompletados ?? 0 }} / {{ summary.camposManuales ?? 0 }}</strong>
+            </div>
+          </div>
+          <div class="result-progress">
+            <div class="result-progress-label">
+              <small>PASOS COMPLETADOS</small>
+              <strong>{{ summary.stepsCompleted }} / {{ summary.totalSteps }}</strong>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" [style.width.%]="summary.totalSteps ? (summary.stepsCompleted / summary.totalSteps) * 100 : 0"></div>
+            </div>
+          </div>
+          <div class="result-visits" *ngIf="summary.completedVisits.length">
+            <small>Visitas registradas:</small>
+            <span *ngFor="let visitId of summary.completedVisits" class="visit-pill">{{ visitId | uppercase }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
           <span class="patient">{{ currentScenario?.patientName }} · {{ currentScenario?.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}</span>
         </div>
         <button class="btn btn-link" (click)="resetScenario(currentScenario!.id)">Cancelar flujo</button>
