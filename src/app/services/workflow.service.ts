@@ -243,9 +243,21 @@ export class WorkflowService {
     }
 
     const asignacion = { ...asignaciones[index] };
-    const paso = asignacion.ejecucion.find(e => e.pasoId === pasoId);
+    let paso = asignacion.ejecucion.find(e => e.pasoId === pasoId);
     if (!paso) {
-      return null;
+      this.startPaso(asignacionId, pasoId);
+      const refreshed = this.getAsignaciones().find(a => a.id === asignacionId);
+      if (!refreshed) {
+        return null;
+      }
+      const refreshedPaso = refreshed.ejecucion.find(e => e.pasoId === pasoId);
+      if (!refreshedPaso) {
+        return null;
+      }
+      asignacion.ejecucion = [...refreshed.ejecucion];
+      asignacion.pasoActualId = refreshed.pasoActualId;
+      asignacion.estado = refreshed.estado;
+      paso = refreshedPaso;
     }
 
     if (!paso.fin) {
@@ -350,7 +362,12 @@ export class WorkflowService {
     const asignaciones = this.loadFromStorage<FlujoAsignado[]>(this.STORAGE_ASSIGNMENTS);
 
     if (flujos && flujos.length > 0) {
-      this.flujosSubject.next(flujos);
+      const reconciliados = this.reconcileDefaultFlows(flujos);
+      if (reconciliados !== flujos) {
+        this.setFlujos(reconciliados);
+      } else {
+        this.flujosSubject.next(reconciliados);
+      }
     } else {
       this.setFlujos(this.getDefaultFlows());
     }
@@ -362,13 +379,14 @@ export class WorkflowService {
     const flujoManual: FlujoTrabajo = {
       id: 'flujo_manual_sin_ia',
       nombre: 'Protocolo Manual (Sin IA)',
-      descripcion: 'Flujo tradicional con cálculos y registros manuales.',
+      descripcion: 'Flujo de pauta manual con cierre en cuatro fases.',
       modoObjetivo: 'sin-ia',
-      tiempoEstimadoMin: 120,
+      tiempoEstimadoMin: 95,
       objetivos: [
-        'Documentar todo el proceso manualmente',
-        'Calcular TMB y distribución de macros sin asistencia',
-        'Registrar seguimiento manual'
+        'Registrar ficha clínica completa',
+        'Calcular requerimientos energéticos',
+        'Definir macros diarios por objetivo',
+        'Cerrar pauta semanal validada'
       ],
       activo: true,
       objetivoFinal: this.getObjetivoComun(),
@@ -378,20 +396,20 @@ export class WorkflowService {
           'Registrar hábitos y recordatorio 24h',
           'Adjuntar notas clínicas'
         ]),
-        this.createPaso('evaluacion_1', 'Evaluación antropométrica', 'Calcular TMB y calorías manualmente.', 'evaluacion', 2, 'sin-ia', false, [
+        this.createPaso('evaluacion_1', 'Calcular requerimientos energéticos', 'Definir TMB y calorías objetivo del paciente.', 'evaluacion', 2, 'sin-ia', false, [
           'Calcular TMB con fórmula Harris-Benedict',
           'Determinar calorías objetivo',
-          'Documentar recomendaciones generales'
+          'Validar coherencia clínica de calorías objetivo'
         ]),
-        this.createPaso('analisis_1', 'Análisis estadístico básico', 'Revisar indicadores manuales.', 'analisis', 3, 'sin-ia', false, [
-          'Revisar IMC promedio',
-          'Comparar objetivos vs resultados',
-          'Registrar hallazgos manuales'
+        this.createPaso('evaluacion_2', 'Definir macros diarios', 'Ajustar proteínas, carbohidratos y grasas diarias.', 'evaluacion', 3, 'sin-ia', false, [
+          'Definir proteínas diarias por objetivo clínico',
+          'Ajustar carbohidratos y grasas diarias',
+          'Validar distribución de macros diarios'
         ]),
-        this.createPaso('seguimiento_1', 'Seguimiento mensual', 'Registrar progreso y decisiones manuales.', 'seguimiento', 4, 'sin-ia', false, [
-          'Registrar peso y adherencia',
-          'Anotar decisiones del profesional',
-          'Planificar próxima consulta'
+        this.createPaso('evaluacion_3', 'Cerrar pauta semanal', 'Construir y guardar pauta nutricional final.', 'evaluacion', 4, 'sin-ia', false, [
+          'Armar pauta semanal por comidas',
+          'Validar consistencia con macros objetivo',
+          'Guardar pauta y cerrar flujo'
         ])
       ]
     };
@@ -399,13 +417,14 @@ export class WorkflowService {
     const flujoIA: FlujoTrabajo = {
       id: 'flujo_asistido_ia',
       nombre: 'Protocolo Asistido (Con IA)',
-      descripcion: 'Flujo acelerado utilizando herramientas inteligentes.',
+      descripcion: 'Flujo asistido para cierre de pauta en cuatro fases.',
       modoObjetivo: 'con-ia',
-      tiempoEstimadoMin: 75,
+      tiempoEstimadoMin: 65,
       objetivos: [
-        'Aprovechar auto-relleno con IA',
-        'Generar menús automáticos',
-        'Medir ahorro de tiempo y esfuerzo'
+        'Completar ficha clínica con soporte IA',
+        'Calcular requerimientos energéticos asistidos',
+        'Ajustar macros diarios con soporte IA',
+        'Guardar pauta final con apoyo de IA'
       ],
       activo: true,
       objetivoFinal: this.getObjetivoComun(),
@@ -418,34 +437,62 @@ export class WorkflowService {
           'Auto-relleno de hábitos',
           'Clasificación de riesgo metabólico'
         ]),
-        this.createPaso('evaluacion_ia_1', 'Evaluación asistida por IA', 'Generar pauta automática y predicciones.', 'evaluacion', 2, 'con-ia', true, [
+        this.createPaso('evaluacion_ia_1', 'Calcular requerimientos con IA', 'Generar y validar calorías objetivo asistidas.', 'evaluacion', 2, 'con-ia', true, [
           'Correr simulación IA',
-          'Aprobar pauta sugerida',
-          'Registrar ajustes manuales'
+          'Validar TMB y calorías objetivo sugeridas',
+          'Ajustar metas energéticas diarias'
         ], [
-          'Generar menú inteligente',
           'Predecir progreso 4 semanas'
         ]),
-        this.createPaso('analisis_ia_1', 'Insights avanzados', 'Analizar métricas con IA.', 'analisis', 3, 'con-ia', true, [
-          'Revisar insights de riesgo',
-          'Comparar con flujo manual',
-          'Registrar KPIs automáticos'
+        this.createPaso('evaluacion_ia_2', 'Definir macros diarios con IA', 'Ajustar distribución de macros asistida.', 'evaluacion', 3, 'con-ia', true, [
+          'Generar propuesta de macros diarios',
+          'Ajustar proteínas, carbohidratos y grasas',
+          'Validar distribución diaria final'
         ], [
-          'Explicar causas raíz',
-          'Detectar alertas tempranas'
+          'Comparar macrodistribución sugerida vs manual'
         ]),
-        this.createPaso('seguimiento_ia_1', 'Seguimiento inteligente', 'Automatizar alertas y proyecciones.', 'seguimiento', 4, 'con-ia', true, [
-          'Enviar plan automatizado',
-          'Registrar sugerencias IA',
-          'Confirmar adherencia proyectada'
+        this.createPaso('evaluacion_ia_3', 'Cerrar pauta semanal asistida', 'Guardar pauta final con soporte de IA.', 'evaluacion', 4, 'con-ia', true, [
+          'Armar pauta semanal sugerida',
+          'Revisar menú final por comidas',
+          'Guardar pauta y cerrar flujo'
         ], [
-          'Simular alertas de riesgo',
-          'Actualizar timeline predictivo'
+          'Sugerir menú real automáticamente',
+          'Generar recomendaciones personalizadas'
         ])
       ]
     };
 
     return [flujoManual, flujoIA];
+  }
+
+  private reconcileDefaultFlows(flujos: FlujoTrabajo[]): FlujoTrabajo[] {
+    const defaults = this.getDefaultFlows();
+    const requiredSteps: Record<string, string[]> = {
+      flujo_manual_sin_ia: ['pacientes_1', 'evaluacion_1', 'evaluacion_2', 'evaluacion_3'],
+      flujo_asistido_ia: ['pacientes_ia_1', 'evaluacion_ia_1', 'evaluacion_ia_2', 'evaluacion_ia_3']
+    };
+
+    let changed = false;
+    const reconciled = [...flujos];
+
+    defaults.forEach(defaultFlow => {
+      const idx = reconciled.findIndex(f => f.id === defaultFlow.id);
+      if (idx === -1) {
+        reconciled.push(defaultFlow);
+        changed = true;
+        return;
+      }
+
+      const existing = reconciled[idx];
+      const required = requiredSteps[defaultFlow.id] || [];
+      const hasAllRequired = required.every(stepId => existing.pasos.some(p => p.id === stepId));
+      if (!hasAllRequired) {
+        reconciled[idx] = defaultFlow;
+        changed = true;
+      }
+    });
+
+    return changed ? reconciled : flujos;
   }
 
   private getObjetivoComun(): FlujoObjetivoFinal {

@@ -11,3 +11,8 @@
   font-weight: 600;
   color: #059669;
 }
+
+.btn-group-vertical .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

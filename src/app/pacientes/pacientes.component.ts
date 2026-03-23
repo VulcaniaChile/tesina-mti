@@ -118,6 +118,22 @@ export class PacientesComponent implements OnInit {
     return this.isPatientLocked(pacienteId) ? this.buildLockMessage() : null;
   }
 
+  isHistoryDisabledForPatient(pacienteId: string): boolean {
+    return this.isPatientLocked(pacienteId) || this.isActiveScenarioPatient(pacienteId);
+  }
+
+  getHistoryDisabledTooltip(pacienteId: string): string | null {
+    if (!this.isHistoryDisabledForPatient(pacienteId)) {
+      return null;
+    }
+
+    if (this.isActiveScenarioPatient(pacienteId)) {
+      return 'Historial deshabilitado mientras el flujo activo esta en curso.';
+    }
+
+    return this.buildLockMessage();
+  }
+
   private buildLockMessage(): string {
     if (this.currentScenarioPatientName) {
       return `Completa el flujo en curso de ${this.currentScenarioPatientName} antes de cambiar de paciente.`;

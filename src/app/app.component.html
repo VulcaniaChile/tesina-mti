@@ -10,8 +10,8 @@
         <li class="nav-item"><a class="nav-link" [routerLink]="'/pacientes'" routerLinkActive="active">Pacientes</a></li>
         <li class="nav-item"><a class="nav-link" [routerLink]="'/flujos'" routerLinkActive="active">Flujos</a></li>
         <li class="nav-item"><a class="nav-link" [routerLink]="'/evaluacion'" routerLinkActive="active">Evaluación</a></li>
-        <li class="nav-item"><a class="nav-link" [routerLink]="'/analisis'" routerLinkActive="active">Análisis Nutricional</a></li>
-        <li class="nav-item"><a class="nav-link" [routerLink]="'/seguimiento'" routerLinkActive="active">Seguimiento</a></li>
+        <li class="nav-item" *ngIf="!scenarioActive"><a class="nav-link" [routerLink]="'/analisis'" routerLinkActive="active">Análisis Nutricional</a></li>
+        <li class="nav-item" *ngIf="!scenarioActive"><a class="nav-link" [routerLink]="'/seguimiento'" routerLinkActive="active">Seguimiento</a></li>
         <li class="nav-item"><a class="nav-link" [routerLink]="'/contacto'" routerLinkActive="active">Contacto</a></li>
       </ul>
     </div>

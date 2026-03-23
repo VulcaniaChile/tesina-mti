@@ -52,6 +52,12 @@
 }
 
 .meal-plan-card {
+	.portion-mode-toolbar {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
 	.portion-card {
 		border: 1px dashed #d8dee9;
 		border-radius: 12px;
@@ -74,6 +80,12 @@
 		&:hover {
 			border-color: #94a3b8;
 			box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+		}
+
+		&.portion-card-customized {
+			border-style: solid;
+			border-color: #1d4ed8;
+			box-shadow: 0 0 0 1px rgba(29, 78, 216, 0.2);
 		}
 
 		.macro-slider {
@@ -216,6 +228,87 @@
 
 .macro-line {
 	letter-spacing: 0.4px;
+}
+
+.macro-summary-sticky {
+	position: sticky;
+	top: 0.65rem;
+	z-index: 15;
+	padding-top: 0.35rem;
+	padding-bottom: 0.4rem;
+	background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(248, 250, 252, 0.9) 78%, rgba(248, 250, 252, 0) 100%);
+	backdrop-filter: blur(2px);
+}
+
+.macro-target-card {
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 0.85rem 0.65rem;
+	background: #ffffff;
+	box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+	&.status-ok {
+		border-color: #86efac;
+		background: #f0fdf4;
+		box-shadow: 0 3px 12px rgba(22, 163, 74, 0.12);
+	}
+
+	&.status-alert {
+		border-color: #fcd34d;
+		background: #fffbeb;
+		box-shadow: 0 3px 12px rgba(245, 158, 11, 0.14);
+	}
+
+	h4 {
+		font-size: 1.4rem;
+		font-weight: 700;
+	}
+
+	small {
+		font-size: 0.78rem;
+	}
+
+	.status-pill {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-top: 0.45rem;
+		padding: 0.2rem 0.55rem;
+		border-radius: 999px;
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		border: 1px solid transparent;
+
+		&.ok {
+			color: #166534;
+			background: #dcfce7;
+			border-color: #86efac;
+		}
+
+		&.alert {
+			color: #92400e;
+			background: #fef3c7;
+			border-color: #fcd34d;
+		}
+	}
+}
+
+@media (max-width: 991.98px) {
+	.macro-summary-sticky {
+		top: 0.25rem;
+	}
+}
+
+@media (max-width: 767.98px) {
+	.macro-summary-sticky {
+		position: static;
+		background: transparent;
+		backdrop-filter: none;
+		padding-top: 0;
+		padding-bottom: 0;
+	}
 }
 
 .preset-banner {

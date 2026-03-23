@@ -84,6 +84,30 @@
   justify-content: space-between;
 }
 
+.current-phase-banner {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+
+  .phase-caption {
+    margin: 0;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #4b5563;
+  }
+
+  strong {
+    font-size: 0.92rem;
+    color: #111827;
+  }
+}
+
 .visit-progress {
   display: flex;
   flex-direction: column;
@@ -110,6 +134,12 @@
   color: #fff;
 }
 
+.visit.pending .visit-step {
+  color: #6b7280;
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
 .visit-step {
   width: 32px;
   height: 32px;
@@ -118,6 +148,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.visit-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.visit-status {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  white-space: nowrap;
+}
+
+.visit-status.status-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.visit-status.status-in-progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.visit-status.status-not-started {
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .visit-details,
@@ -318,4 +379,66 @@
   padding: 0.15rem 0.65rem;
   font-size: 0.7rem;
   color: #0f172a;
+}
+
+.completion-modal {
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.completion-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.completion-kpi-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  .label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+  }
+
+  strong {
+    font-size: 1rem;
+    color: #111827;
+  }
+
+  small {
+    font-size: 0.75rem;
+  }
+}
+
+.comparison-block {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 10px;
+  padding: 0.85rem;
+}
+
+.comparison-block--pending {
+  border-style: dashed;
+  background: #f9fafb;
+}
+
+.modal-backdrop {
+  &.show {
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 768px) {
+  .completion-kpi-grid {
+    grid-template-columns: 1fr;
+  }
 }

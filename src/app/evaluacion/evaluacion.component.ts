@@ -93,6 +93,8 @@ export class EvaluacionComponent implements OnInit {
   ];
 
   portionGrams: Record<string, number> = {};
+  useStandardPortions = true;
+  private defaultPortionGrams: Record<string, number> = {};
 
   macroOrder: MealPortion['macroDominante'][] = ['proteina', 'carbohidrato', 'grasa'];
   private macroPortionMap: Record<MealPortion['macroDominante'], string> = {
@@ -100,6 +102,11 @@ export class EvaluacionComponent implements OnInit {
     carbohidrato: 'macro-carbo',
     grasa: 'macro-grasa',
     mixto: 'macro-carbo'
+  };
+  private macroGramRanges: Record<'proteina' | 'carbohidrato' | 'grasa', { min: number; max: number }> = {
+    proteina: { min: 15, max: 40 },
+    carbohidrato: { min: 15, max: 60 },
+    grasa: { min: 5, max: 25 }
   };
   macroQuickPresets = [0, 1, 2, 3];
   private mealMacroDistribution: Record<string, { proteina: number; carbohidrato: number; grasa: number }> = {
@@ -258,11 +265,15 @@ export class EvaluacionComponent implements OnInit {
     };
 
     this.resetMealPlan();
+
+    if (this.pasoEnEjecucion && this.pasoEnEjecucion.modulo === 'evaluacion' && this.currentStep === 1) {
+      this.completarPaso(this.pasoEnEjecucion);
+    }
   }
 
   guardarPauta() {
     if (this.currentStep !== 2) {
-      alert('Debes completar el Paso 2 antes de guardar la pauta.');
+      alert('Debes completar el subpaso de cierre de pauta antes de guardar.');
       return;
     }
     if (this.pautaNutricional.calorias === 0 || !this.pacienteSeleccionado) {
@@ -307,6 +318,11 @@ export class EvaluacionComponent implements OnInit {
     });
 
     alert('✅ Pauta nutricional guardada exitosamente');
+
+    if (this.pasoEnEjecucion && this.pasoEnEjecucion.modulo === 'evaluacion') {
+      this.completarPaso(this.pasoEnEjecucion);
+    }
+
     this.actualizarFlujoParaPaciente(this.pacienteSeleccionado.id);
     
     // Navegar al seguimiento del paciente
@@ -317,7 +333,7 @@ export class EvaluacionComponent implements OnInit {
 
   continuarPaso2() {
     if (!this.pautaNutricional.calorias) {
-      alert('Calcula los macros diarios antes de avanzar al Paso 2.');
+      alert('Calcula y valida los macros diarios antes de avanzar al subpaso de cierre de pauta.');
       return;
     }
     if (!this.validarPacienteCompleto()) {
@@ -329,6 +345,15 @@ export class EvaluacionComponent implements OnInit {
     if (!this.validarDatosContraEscenario()) {
       return;
     }
+
+    if (this.pasoEnEjecucion && this.pasoEnEjecucion.modulo === 'evaluacion') {
+      this.completarPaso(this.pasoEnEjecucion);
+      const pacienteId = this.flujoAsignado?.pacienteId || this.pacienteSeleccionado?.id;
+      if (pacienteId) {
+        this.actualizarFlujoParaPaciente(pacienteId);
+      }
+    }
+
     this.currentStep = 2;
   }
 
@@ -462,9 +487,44 @@ export class EvaluacionComponent implements OnInit {
   }
 
   onPortionGramsChange(portion: MealPortion, gramsValue: number) {
-    const grams = this.clampGrams(Number(gramsValue));
+    if (this.useStandardPortions) {
+      return;
+    }
+    const range = this.getPortionRange(portion);
+    const grams = this.clampGrams(Number(gramsValue), range.min, range.max);
     this.portionGrams[portion.id] = grams;
     this.applyDominantGrams(portion, grams);
+  }
+
+  toggleCustomPortions() {
+    this.useStandardPortions = !this.useStandardPortions;
+    if (this.useStandardPortions) {
+      this.restablecerPorcionesEstandar();
+    }
+  }
+
+  restablecerPorcionesEstandar() {
+    this.availablePortions.forEach(portion => {
+      const standard = this.defaultPortionGrams[portion.id] ?? this.getDominantGramsValue(portion);
+      this.portionGrams[portion.id] = standard;
+      this.applyDominantGrams(portion, standard);
+    });
+  }
+
+  getPortionRange(portion: MealPortion): { min: number; max: number } {
+    if (portion.macroDominante === 'proteina' || portion.macroDominante === 'carbohidrato' || portion.macroDominante === 'grasa') {
+      return this.macroGramRanges[portion.macroDominante];
+    }
+    return { min: 0, max: 100 };
+  }
+
+  isPortionCustomized(portion: MealPortion): boolean {
+    const standard = this.defaultPortionGrams[portion.id];
+    const current = this.portionGrams[portion.id];
+    if (typeof standard !== 'number' || typeof current !== 'number') {
+      return false;
+    }
+    return current !== standard;
   }
 
   getMacroLabel(macro: MealPortion['macroDominante']): string {
@@ -506,6 +566,22 @@ export class EvaluacionComponent implements OnInit {
     const delta = target - current;
     const pct = target > 0 ? Math.min(130, Math.round((current / target) * 100)) : 0;
     return { current, target, delta, pct };
+  }
+
+  isCaloriesOnTarget(): boolean {
+    const progress = this.getCaloriesProgress();
+    if (!progress.target) {
+      return false;
+    }
+    return Math.abs(progress.delta) <= progress.target * 0.05;
+  }
+
+  isMacroOnTarget(macro: 'proteinas' | 'carbohidratos' | 'grasas'): boolean {
+    const progress = this.getMacroProgress(macro);
+    if (!progress.target) {
+      return false;
+    }
+    return Math.abs(progress.delta) <= progress.target * this.macroTolerance;
   }
 
   planCumpleMacros(): boolean {
@@ -712,8 +788,10 @@ export class EvaluacionComponent implements OnInit {
   private initPortionGrams() {
     this.portionGrams = {};
     this.availablePortions.forEach(portion => {
-      this.portionGrams[portion.id] = this.getDominantGramsValue(portion);
-      this.applyDominantGrams(portion, this.portionGrams[portion.id]);
+      const standard = this.getDominantGramsValue(portion);
+      this.defaultPortionGrams[portion.id] = standard;
+      this.portionGrams[portion.id] = standard;
+      this.applyDominantGrams(portion, standard);
     });
   }
 
@@ -731,7 +809,8 @@ export class EvaluacionComponent implements OnInit {
   }
 
   private applyDominantGrams(portion: MealPortion, grams: number) {
-    const safeGrams = this.clampGrams(grams);
+    const range = this.getPortionRange(portion);
+    const safeGrams = this.clampGrams(grams, range.min, range.max);
     portion.proteinas = portion.macroDominante === 'proteina' ? safeGrams : 0;
     portion.carbohidratos = portion.macroDominante === 'carbohidrato' ? safeGrams : 0;
     portion.grasas = portion.macroDominante === 'grasa' ? safeGrams : 0;
@@ -743,11 +822,11 @@ export class EvaluacionComponent implements OnInit {
     return Math.round(calories);
   }
 
-  private clampGrams(value: number): number {
+  private clampGrams(value: number, min = 0, max = 100): number {
     if (!Number.isFinite(value)) {
-      return 0;
+      return min;
     }
-    return Math.max(0, Math.min(100, Math.round(value)));
+    return Math.max(min, Math.min(max, Math.round(value)));
   }
 
   private buildMenuFromPlan(): string[] {
@@ -874,7 +953,7 @@ export class EvaluacionComponent implements OnInit {
       this.scenarioPatientName = current.scenario.patientName;
       return true;
     }
-    alert('Debes tener un flujo en curso desde el panel derecho para avanzar al Paso 2.');
+    alert('Debes tener un flujo en curso desde el panel derecho para avanzar al siguiente subpaso.');
     return false;
   }
 
@@ -1029,10 +1108,49 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
+    this.completarPasoPacientePendienteSiCorresponde();
+
     const pasoActual = this.pasosFlujo.find(p => p.id === this.flujoAsignado?.pasoActualId);
     const pasoPendiente = this.pasosFlujo.find(paso => !this.flujoAsignado!.ejecucion.some(e => e.pasoId === paso.id && e.fin));
     this.pasoEnEjecucion = pasoActual || pasoPendiente || null;
+    this.iniciarPasoEvaluacionSiCorresponde();
     this.prepararFeedbackBase();
+  }
+
+  private completarPasoPacientePendienteSiCorresponde() {
+    if (!this.flujoAsignado || !this.pacienteSeleccionado) {
+      return;
+    }
+
+    const pasoPacientePendiente = this.pasosFlujo.find(paso =>
+      paso.modulo === 'pacientes' &&
+      !this.flujoAsignado!.ejecucion.some(e => e.pasoId === paso.id && !!e.fin)
+    );
+
+    if (!pasoPacientePendiente) {
+      return;
+    }
+
+    this.workflowService.completePaso(this.flujoAsignado.id, pasoPacientePendiente.id, {
+      facilidad: this.isAIEnabled ? 4 : 3,
+      camposAutocompletados: this.isAIEnabled ? 6 : 0,
+      camposManuales: this.isAIEnabled ? 2 : 6,
+      comentarios: 'Cierre automático de fase paciente al iniciar evaluación.'
+    });
+
+    this.flujoAsignado = this.workflowService.getAsignacionActiva(this.flujoAsignado.pacienteId) || this.flujoAsignado;
+  }
+
+  private iniciarPasoEvaluacionSiCorresponde() {
+    if (!this.flujoAsignado || !this.pasoEnEjecucion || this.pasoEnEjecucion.modulo !== 'evaluacion') {
+      return;
+    }
+    const registro = this.flujoAsignado.ejecucion.find(e => e.pasoId === this.pasoEnEjecucion?.id);
+    if (registro) {
+      return;
+    }
+    this.workflowService.startPaso(this.flujoAsignado.id, this.pasoEnEjecucion.id);
+    this.flujoAsignado = this.workflowService.getAsignacionActiva(this.flujoAsignado.pacienteId) || this.flujoAsignado;
   }
 
   private prepararFeedbackBase() {
@@ -1123,6 +1241,11 @@ export class EvaluacionComponent implements OnInit {
   completarPaso(paso: PasoFlujo) {
     if (!this.flujoAsignado) {
       return;
+    }
+
+    const registro = this.flujoAsignado.ejecucion.find(e => e.pasoId === paso.id);
+    if (!registro) {
+      this.workflowService.startPaso(this.flujoAsignado.id, paso.id);
     }
 
     this.workflowService.completePaso(this.flujoAsignado.id, paso.id, {

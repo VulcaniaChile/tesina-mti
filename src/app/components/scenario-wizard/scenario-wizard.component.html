@@ -95,6 +95,16 @@
         <button class="btn btn-link" (click)="resetScenario(currentScenario!.id)">Cancelar flujo</button>
       </div>
 
+      <div class="current-phase-banner">
+        <div>
+          <p class="phase-caption">Fase actual</p>
+          <strong>{{ getCurrentPhaseTitle() }}</strong>
+        </div>
+        <span class="visit-status" [class]="'visit-status ' + getCurrentPhaseStatusClass()">
+          {{ getCurrentPhaseStatusLabel() }}
+        </span>
+      </div>
+
       <div class="preset-banner" *ngIf="currentScenario?.patientPreset">
         <p class="mb-1">Cargar antes de iniciar:</p>
         <div class="preset-grid">
@@ -110,10 +120,17 @@
       </div>
 
       <div class="visit-progress">
-        <div class="visit" *ngFor="let visit of currentScenario?.visits" [class.active]="visit.id === visitId" [class.completed]="completedVisits.includes(visit.id)">
-          <div class="visit-step">{{ completedVisits.includes(visit.id) ? '✓' : visit.id === visitId ? '●' : '○' }}</div>
+        <div class="visit" *ngFor="let visit of currentScenario?.visits" [class.active]="isVisitActive(visit)" [class.completed]="getVisitStatus(visit) === 'completed'" [class.pending]="getVisitStatus(visit) === 'not-started'">
+          <div class="visit-step">
+            <i [class]="getVisitStatusIcon(visit)" aria-hidden="true"></i>
+          </div>
           <div class="visit-info">
-            <p class="visit-title">{{ visit.title }}</p>
+            <div class="visit-title-row">
+              <p class="visit-title">{{ visit.title }}</p>
+              <span class="visit-status" [class.status-completed]="getVisitStatus(visit) === 'completed'" [class.status-in-progress]="getVisitStatus(visit) === 'in-progress'" [class.status-not-started]="getVisitStatus(visit) === 'not-started'">
+                {{ getVisitStatusLabel(visit) }}
+              </span>
+            </div>
             <small>{{ visit.expectedOutcome }}</small>
           </div>
           <div class="visit-target">
@@ -154,4 +171,85 @@
       </div>
     </div>
   </ng-template>
+
+  <div class="modal fade" tabindex="-1" aria-labelledby="scenarioCompletionModalLabel" aria-hidden="true" [class.show]="showCompletionModal" [style.display]="showCompletionModal ? 'block' : 'none'">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content completion-modal" *ngIf="completionSummary">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="scenarioCompletionModalLabel">
+            <i class="fas fa-flag-checkered me-2"></i>
+            Flujo completado: {{ completionSummary.scenarioTitle }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeCompletionModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">
+            Indicadores capturados al cierre de la simulacion. Puedes revisar mas detalle en Analisis Nutricional.
+          </p>
+
+          <div class="completion-kpi-grid">
+            <div class="completion-kpi-card">
+              <span class="label">Tiempo total</span>
+              <strong>{{ completionSummary.tiempoTotalMin ? (completionSummary.tiempoTotalMin | number:'1.0-1') + ' min' : 'Sin datos' }}</strong>
+            </div>
+            <div class="completion-kpi-card">
+              <span class="label">Facilidad promedio</span>
+              <strong>{{ completionSummary.facilidadPromedio ? (completionSummary.facilidadPromedio | number:'1.0-1') + ' / 5' : 'Sin datos' }}</strong>
+            </div>
+            <div class="completion-kpi-card">
+              <span class="label">Auto / Manual</span>
+              <strong>{{ completionSummary.camposAutocompletados ?? 0 }} / {{ completionSummary.camposManuales ?? 0 }}</strong>
+            </div>
+            <div class="completion-kpi-card">
+              <span class="label">Pasos completados</span>
+              <strong>{{ completionSummary.stepsCompleted }} / {{ completionSummary.totalSteps }}</strong>
+            </div>
+          </div>
+
+          <div class="mt-3" *ngIf="completionSummary.completedVisits.length">
+            <small class="text-muted d-block mb-1">Visitas completadas</small>
+            <div class="result-visits">
+              <span *ngFor="let visitId of completionSummary.completedVisits" class="visit-pill">{{ visitId | uppercase }}</span>
+            </div>
+          </div>
+
+          <div class="comparison-block mt-4" [class.comparison-block--pending]="!hasTwinComparison">
+            <h6 class="mb-2">Comparacion con escenario gemelo</h6>
+            <p class="text-muted mb-2" *ngIf="hasTwinComparison">
+              Referencia: {{ completionTwinLabel }}
+            </p>
+            <p class="text-muted mb-2" *ngIf="!hasTwinComparison">
+              Aun no hay una referencia gemela completada para calcular deltas.
+            </p>
+
+            <div class="completion-kpi-grid" *ngIf="hasTwinComparison">
+              <div class="completion-kpi-card">
+                <span class="label">Delta tiempo</span>
+                <strong [class.text-success]="timeDeltaVsTwin !== null && timeDeltaVsTwin > 0" [class.text-danger]="timeDeltaVsTwin !== null && timeDeltaVsTwin < 0">
+                  {{ timeDeltaVsTwin === null ? 'Sin datos' : (timeDeltaVsTwin | number:'1.0-1') + ' min' }}
+                </strong>
+                <small class="text-muted" *ngIf="timeDeltaVsTwin !== null">
+                  {{ timeDeltaVsTwin > 0 ? 'Mas rapido que el gemelo' : timeDeltaVsTwin < 0 ? 'Mas lento que el gemelo' : 'Mismo tiempo que el gemelo' }}
+                </small>
+              </div>
+              <div class="completion-kpi-card">
+                <span class="label">Delta facilidad</span>
+                <strong [class.text-success]="facilidadDeltaVsTwin !== null && facilidadDeltaVsTwin > 0" [class.text-danger]="facilidadDeltaVsTwin !== null && facilidadDeltaVsTwin < 0">
+                  {{ facilidadDeltaVsTwin === null ? 'Sin datos' : (facilidadDeltaVsTwin | number:'1.0-1') + ' pts' }}
+                </strong>
+                <small class="text-muted" *ngIf="facilidadDeltaVsTwin !== null">
+                  {{ facilidadDeltaVsTwin > 0 ? 'Mayor facilidad que el gemelo' : facilidadDeltaVsTwin < 0 ? 'Menor facilidad que el gemelo' : 'Misma facilidad que el gemelo' }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCompletionModal()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop fade" [class.show]="showCompletionModal" *ngIf="showCompletionModal" (click)="closeCompletionModal()"></div>
 </div>

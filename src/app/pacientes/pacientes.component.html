@@ -174,7 +174,8 @@
                       <button type="button"
                               class="btn btn-info btn-sm"
                               (click)="handleProtectedNavigation($event, paciente, '/seguimiento')"
-                              [attr.title]="getPatientLockTooltip(paciente.id)">
+                              [disabled]="isHistoryDisabledForPatient(paciente.id)"
+                              [attr.title]="getHistoryDisabledTooltip(paciente.id)">
                         <i class="fas fa-chart-line me-1"></i>
                         Historial
                       </button>

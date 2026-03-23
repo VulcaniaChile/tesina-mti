@@ -26,6 +26,7 @@ export interface ScenarioVisit {
   expectedOutcome: string;
   targetMinutes: number;
   route: string;
+  completionPasoIds?: string[];
 }
 
 export interface ActiveScenarioProgress {
@@ -293,17 +294,33 @@ export class ScenarioService {
   ): string[] {
     const completed: string[] = [];
     for (const visit of visits) {
-      const pasosModulo = flujo.pasos.filter(paso => paso.modulo === visit.route);
-      const moduloCompletado = pasosModulo.length === 0
-        ? true
-        : pasosModulo.every(paso => ejecuciones.some(e => e.pasoId === paso.id && !!e.fin));
-      if (moduloCompletado) {
+      const completedVisit = this.isVisitCompleted(visit, flujo, ejecuciones);
+      if (completedVisit) {
         completed.push(visit.id);
       } else {
         break;
       }
     }
     return completed;
+  }
+
+  private isVisitCompleted(
+    visit: ScenarioVisit,
+    flujo: FlujoTrabajo,
+    ejecuciones: { pasoId: string; fin?: string }[]
+  ): boolean {
+    if (visit.completionPasoIds && visit.completionPasoIds.length > 0) {
+      const validPasoIds = visit.completionPasoIds.filter(pasoId => flujo.pasos.some(p => p.id === pasoId));
+      if (validPasoIds.length > 0) {
+        return validPasoIds.every(pasoId => ejecuciones.some(e => e.pasoId === pasoId && !!e.fin));
+      }
+      return false;
+    }
+
+    const pasosModulo = flujo.pasos.filter(paso => paso.modulo === visit.route);
+    return pasosModulo.length === 0
+      ? true
+      : pasosModulo.every(paso => ejecuciones.some(e => e.pasoId === paso.id && !!e.fin));
   }
 
   private finishScenario(id: ScenarioId, completedVisits: string[]): void {
@@ -328,75 +345,79 @@ export class ScenarioService {
     return [
       {
         id: 'visita_1',
-        title: 'Fase 1 – Evaluación Inicial',
+        title: 'Fase 1 – Registro del Paciente',
         instructions: ia
           ? [
-              'Ejecutar importación de ficha con IA',
-              'Validar datos autocompletados y registrar observaciones',
-              'Confirmar consentimiento informado para uso de IA'
+              'Completar la ficha base con asistencia IA',
+              'Validar datos autocompletados y corregir inconsistencias',
+              'Confirmar datos clínicos mínimos antes de pasar a cálculo'
             ]
           : [
-              'Completar ficha manual y recordatorio 24h',
-              'Registrar hábitos y antecedentes',
-              'Documentar cálculos de TMB inicial'
+              'Completar ficha manual y antecedentes',
+              'Registrar actividad, objetivo y datos antropométricos base',
+              'Confirmar que la ficha queda lista para cálculo nutricional'
             ],
-        expectedOutcome: 'Ficha completa + objetivos energéticos definidos.',
-          targetMinutes: ia ? 25 : 45,
-          route: 'pacientes'
+        expectedOutcome: 'Ficha clínica completa y validada para cálculo.',
+        targetMinutes: ia ? 20 : 30,
+        route: 'pacientes',
+        completionPasoIds: [ia ? 'pacientes_ia_1' : 'pacientes_1']
       },
       {
         id: 'visita_2',
-        title: 'Fase 2 – Evaluación Antropométrica',
+        title: 'Fase 2 – Cálculo Nutricional',
         instructions: ia
           ? [
-              'Correr simulación y obtener pauta sugerida',
-              'Aprobar/ajustar macros y menú generado',
-              'Registrar proyección automática de resultados'
+              'Calcular requerimiento energético con asistencia IA',
+              'Validar TMB y calorías objetivo sugeridas',
+              'Confirmar base energética antes de definir macros'
             ]
           : [
-              'Calcular TMB con fórmula manual',
-              'Definir calorías y macros objetivo',
-              'Registrar pauta manual en seguimiento'
+              'Calcular TMB y calorías objetivo',
+              'Validar coherencia entre objetivo clínico y calorías',
+              'Dejar lista la base para definir macros diarios'
             ],
-        expectedOutcome: 'Plan alimentario alineado con pauta mediterránea 1800 kcal.',
-          targetMinutes: ia ? 20 : 35,
-          route: 'evaluacion'
+        expectedOutcome: 'Base energética validada para el paciente.',
+        targetMinutes: ia ? 10 : 16,
+        route: 'evaluacion',
+        completionPasoIds: [ia ? 'evaluacion_ia_1' : 'evaluacion_1']
       },
       {
         id: 'visita_3',
-        title: 'Fase 3 – Análisis',
+        title: 'Fase 3 – Definición de Macros Diarios',
         instructions: ia
           ? [
-              'Revisar insights avanzados y alertas IA',
-              'Comparar esfuerzo vs flujo manual de mismo paciente',
-              'Guardar KPIs automáticos y notas'
+              'Generar propuesta de macros diarios con IA',
+              'Ajustar distribución proteína, carbohidratos y grasas',
+              'Validar macros diarios antes de pasar al cierre'
             ]
           : [
-              'Analizar indicadores manuales (IMC, adherencia)',
-              'Documentar hallazgos clave',
-              'Comparar progreso con objetivo final'
+              'Definir macros diarios por objetivo clínico',
+              'Comprobar equilibrio entre proteína, carbohidratos y grasas',
+              'Confirmar macros diarios para iniciar cierre de pauta'
             ],
-        expectedOutcome: 'Informe con riesgos y acciones priorizadas.',
-          targetMinutes: ia ? 15 : 25,
-          route: 'analisis'
+        expectedOutcome: 'Macros diarios aprobados para construir pauta semanal.',
+        targetMinutes: ia ? 8 : 12,
+        route: 'evaluacion',
+        completionPasoIds: [ia ? 'evaluacion_ia_2' : 'evaluacion_2']
       },
       {
         id: 'visita_4',
-        title: 'Fase 4 – Seguimiento Final',
+        title: 'Fase 4 – Cierre de Pauta',
         instructions: ia
           ? [
-              'Simular alertas y notificaciones automáticas',
-              'Confirmar adherencia proyectada por IA',
-              'Cerrar flujo registrando ahorro de tiempo'
+              'Armar pauta semanal final a partir de macros aprobados',
+              'Revisar menú sugerido y ajustes clínicos finales',
+              'Guardar pauta definitiva y cerrar el flujo'
             ]
           : [
-              'Registrar progreso manual y decisiones del profesional',
-              'Planificar próxima consulta',
-              'Cerrar flujo con checklist de consistencia'
+              'Construir pauta semanal final con porciones definidas',
+              'Revisar consistencia entre menú, macros y objetivo',
+              'Guardar pauta definitiva y cerrar el flujo'
             ],
-        expectedOutcome: 'Resultado final documentado con mismo plan para ambos modos.',
-          targetMinutes: ia ? 15 : 30,
-          route: 'seguimiento'
+        expectedOutcome: 'Pauta guardada y flujo de simulación completado.',
+        targetMinutes: ia ? 10 : 15,
+        route: 'evaluacion',
+        completionPasoIds: [ia ? 'evaluacion_ia_3' : 'evaluacion_3']
       }
     ];
   }
