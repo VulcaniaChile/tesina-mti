@@ -1,0 +1,48 @@
+.macro-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.macro-tag i {
+  font-size: 0.72rem;
+}
+
+.macro-tag-value {
+  font-weight: 700;
+}
+
+.macro-tag-compact {
+  padding: 0.14rem 0.46rem;
+  font-size: 0.72rem;
+}
+
+.macro-tag-proteina {
+  color: #9b1c1c;
+  background: #fde8e8;
+  border-color: #f8b4b4;
+}
+
+.macro-tag-carbohidrato {
+  color: #8a4b00;
+  background: #fff7d6;
+  border-color: #fcd34d;
+}
+
+.macro-tag-grasa {
+  color: #1e429f;
+  background: #e1effe;
+  border-color: #93c5fd;
+}
+
+.macro-tag-mixto {
+  color: #374151;
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}

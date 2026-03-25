@@ -341,6 +341,9 @@ export class WorkflowService {
     );
     const pasosCompletados = asignacion.ejecucion.filter(e => e.fin).length;
     const totalPasos = flujo?.pasos.length ?? asignacion.ejecucion.length;
+    const menuRealSugerido = asignacion.ejecucion.some(e =>
+      !!e.fin && (e.pasoId === 'evaluacion_3' || e.pasoId === 'evaluacion_ia_3')
+    );
 
     const tiempoTotalMin = tiempos.reduce((sum, val) => sum + val, 0);
     const facilidadPromedio = facilidades.length > 0
@@ -353,7 +356,8 @@ export class WorkflowService {
       camposAutocompletadosTotal,
       camposManualesTotal,
       pasosCompletados,
-      totalPasos
+      totalPasos,
+      menuRealSugerido
     };
   }
 
@@ -406,7 +410,12 @@ export class WorkflowService {
           'Ajustar carbohidratos y grasas diarias',
           'Validar distribución de macros diarios'
         ]),
-        this.createPaso('evaluacion_3', 'Cerrar pauta semanal', 'Construir y guardar pauta nutricional final.', 'evaluacion', 4, 'sin-ia', false, [
+        this.createPaso('evaluacion_3', 'Sugerir menú real', 'Transformar porciones en platos reales sugeridos.', 'evaluacion', 4, 'sin-ia', false, [
+          'Generar sugerencias de menú real por tiempo de comida',
+          'Validar consistencia con macros objetivo',
+          'Confirmar selección para cierre final'
+        ]),
+        this.createPaso('evaluacion_4', 'Cerrar pauta semanal', 'Construir y guardar pauta nutricional final.', 'evaluacion', 5, 'sin-ia', false, [
           'Armar pauta semanal por comidas',
           'Validar consistencia con macros objetivo',
           'Guardar pauta y cerrar flujo'
@@ -451,7 +460,15 @@ export class WorkflowService {
         ], [
           'Comparar macrodistribución sugerida vs manual'
         ]),
-        this.createPaso('evaluacion_ia_3', 'Cerrar pauta semanal asistida', 'Guardar pauta final con soporte de IA.', 'evaluacion', 4, 'con-ia', true, [
+        this.createPaso('evaluacion_ia_3', 'Sugerir menú real con IA', 'Transformar porciones en platos reales sugeridos con soporte IA.', 'evaluacion', 4, 'con-ia', true, [
+          'Generar menú real sugerido por tiempo de comida',
+          'Validar consistencia con macros objetivo',
+          'Confirmar selección para cierre final'
+        ], [
+          'Ranking de platos por afinidad de macros',
+          'Ajustes automáticos por preferencia del paciente'
+        ]),
+        this.createPaso('evaluacion_ia_4', 'Cerrar pauta semanal asistida', 'Guardar pauta final con soporte de IA.', 'evaluacion', 5, 'con-ia', true, [
           'Armar pauta semanal sugerida',
           'Revisar menú final por comidas',
           'Guardar pauta y cerrar flujo'
@@ -468,8 +485,8 @@ export class WorkflowService {
   private reconcileDefaultFlows(flujos: FlujoTrabajo[]): FlujoTrabajo[] {
     const defaults = this.getDefaultFlows();
     const requiredSteps: Record<string, string[]> = {
-      flujo_manual_sin_ia: ['pacientes_1', 'evaluacion_1', 'evaluacion_2', 'evaluacion_3'],
-      flujo_asistido_ia: ['pacientes_ia_1', 'evaluacion_ia_1', 'evaluacion_ia_2', 'evaluacion_ia_3']
+      flujo_manual_sin_ia: ['pacientes_1', 'evaluacion_1', 'evaluacion_2', 'evaluacion_3', 'evaluacion_4'],
+      flujo_asistido_ia: ['pacientes_ia_1', 'evaluacion_ia_1', 'evaluacion_ia_2', 'evaluacion_ia_3', 'evaluacion_ia_4']
     };
 
     let changed = false;

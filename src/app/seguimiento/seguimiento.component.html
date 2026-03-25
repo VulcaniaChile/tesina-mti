@@ -168,10 +168,10 @@
                           </span>
                         </td>
                         <td>{{ registro.calorias }} kcal</td>
-                        <td class="small">
-                          P: {{ registro.proteinas }}g<br>
-                          C: {{ registro.carbohidratos }}g<br>
-                          G: {{ registro.grasas }}g
+                        <td class="small d-flex flex-column gap-1">
+                          <app-macro-tag macro="proteina" [grams]="registro.proteinas" [compact]="true"></app-macro-tag>
+                          <app-macro-tag macro="carbohidrato" [grams]="registro.carbohidratos" [compact]="true"></app-macro-tag>
+                          <app-macro-tag macro="grasa" [grams]="registro.grasas" [compact]="true"></app-macro-tag>
                         </td>
                         <td>
                           <span class="badge" [class]="registro.createdWith === 'con-ia' ? 'bg-primary' : 'bg-secondary'">
@@ -282,15 +282,21 @@
                           </div>
                           <div class="col-3">
                             <small class="text-muted">Proteínas</small>
-                            <div class="fw-bold">{{ pauta.proteinas }}g</div>
+                            <div class="fw-bold mt-1">
+                              <app-macro-tag macro="proteina" [grams]="pauta.proteinas" [compact]="true"></app-macro-tag>
+                            </div>
                           </div>
                           <div class="col-3">
                             <small class="text-muted">Carbohidratos</small>
-                            <div class="fw-bold">{{ pauta.carbohidratos }}g</div>
+                            <div class="fw-bold mt-1">
+                              <app-macro-tag macro="carbohidrato" [grams]="pauta.carbohidratos" [compact]="true"></app-macro-tag>
+                            </div>
                           </div>
                           <div class="col-3">
                             <small class="text-muted">Grasas</small>
-                            <div class="fw-bold">{{ pauta.grasas }}g</div>
+                            <div class="fw-bold mt-1">
+                              <app-macro-tag macro="grasa" [grams]="pauta.grasas" [compact]="true"></app-macro-tag>
+                            </div>
                           </div>
                         </div>
                         

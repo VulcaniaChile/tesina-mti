@@ -6,11 +6,12 @@ import { DataService } from '../services/data.service';
 import { VersionService } from '../services/version.service';
 import { Paciente, RegistroNutricional, SeguimientoMensual, PautaNutricional, FlujoAsignado, FlujoTrabajo, PasoFlujo } from '../models/nutricion.models';
 import { WorkflowService } from '../services/workflow.service';
+import { MacroTagComponent } from '../components/macro-tag/macro-tag.component';
 
 @Component({
   selector: 'app-seguimiento',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MacroTagComponent],
   templateUrl: './seguimiento.component.html',
   styleUrl: './seguimiento.component.scss'
 })

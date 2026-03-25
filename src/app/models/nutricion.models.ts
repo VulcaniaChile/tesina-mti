@@ -143,6 +143,7 @@ export interface FlujoResultado {
   camposManualesTotal?: number;
   pasosCompletados?: number;
   totalPasos?: number;
+  menuRealSugerido?: boolean;
 }
 
 export type OrdenValidacion = 'manual-primero' | 'ia-primero';

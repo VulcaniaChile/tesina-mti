@@ -19,11 +19,12 @@ import {
 import { ScenarioService } from '../services/scenario.service';
 import { WorkflowService } from '../services/workflow.service';
 import { MealCatalogService } from '../services/meal-catalog.service';
+import { MacroTagComponent } from '../components/macro-tag/macro-tag.component';
 
 @Component({
   selector: 'app-evaluacion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MacroTagComponent],
   templateUrl: './evaluacion.component.html',
   styleUrl: './evaluacion.component.scss'
 })
@@ -286,6 +287,12 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
+    const pasoMenuReal = this.getPasoMenuRealId();
+    if (pasoMenuReal && !this.estaPasoCompletado(pasoMenuReal)) {
+      alert('Antes de guardar la pauta debes ejecutar "Sugerir menú real" para completar la fase de medición.');
+      return;
+    }
+
     // Guardar registro nutricional
     this.dataService.addRegistro({
       pacienteId: this.pacienteSeleccionado.id,
@@ -319,11 +326,15 @@ export class EvaluacionComponent implements OnInit {
 
     alert('✅ Pauta nutricional guardada exitosamente');
 
-    if (this.pasoEnEjecucion && this.pasoEnEjecucion.modulo === 'evaluacion') {
+    const pasoCierre = this.getPasoCierrePautaId();
+    if (pasoCierre) {
+      this.completarPasoPorId(pasoCierre, 'Pauta guardada y cierre final completado.');
+    } else if (this.pasoEnEjecucion && this.pasoEnEjecucion.modulo === 'evaluacion') {
       this.completarPaso(this.pasoEnEjecucion);
     }
 
     this.actualizarFlujoParaPaciente(this.pacienteSeleccionado.id);
+    this.scenarioService.syncWithWorkflowNow();
     
     // Navegar al seguimiento del paciente
     this.router.navigate(['/seguimiento'], { 
@@ -530,14 +541,24 @@ export class EvaluacionComponent implements OnInit {
   getMacroLabel(macro: MealPortion['macroDominante']): string {
     switch (macro) {
       case 'proteina':
-        return 'proteínas';
+        return 'proteína';
       case 'carbohidrato':
-        return 'carbohidratos';
+        return 'carbohidrato';
       case 'grasa':
-        return 'grasas';
+        return 'grasa';
       default:
-        return 'mixtas';
+        return 'mixto';
     }
+  }
+
+  mapMacroResumenToDominante(macro: string): 'proteina' | 'carbohidrato' | 'grasa' {
+    if (macro === 'proteinas') {
+      return 'proteina';
+    }
+    if (macro === 'carbohidratos') {
+      return 'carbohidrato';
+    }
+    return 'grasa';
   }
 
   getDominantGramsDisplay(portion: MealPortion): number {
@@ -695,6 +716,11 @@ export class EvaluacionComponent implements OnInit {
     this.mealSuggestions = this.mealCatalogService.suggestFullMenu(this.dailyMealPlan.meals);
     console.log('Sugerencias generadas:', this.mealSuggestions);
     this.showMealSuggestions = true;
+
+    const pasoMenuReal = this.getPasoMenuRealId();
+    if (pasoMenuReal) {
+      this.completarPasoPorId(pasoMenuReal, 'Sugerencia de menú real generada para la pauta.');
+    }
   }
 
   toggleMealSuggestions() {
@@ -1255,6 +1281,48 @@ export class EvaluacionComponent implements OnInit {
       camposManuales: this.feedbackPaso.camposManuales
     });
     this.actualizarFlujoParaPaciente(this.flujoAsignado.pacienteId);
+  }
+
+  private completarPasoPorId(pasoId: string, comentarios?: string) {
+    if (!this.flujoAsignado) {
+      return;
+    }
+
+    this.workflowService.completePaso(this.flujoAsignado.id, pasoId, {
+      facilidad: this.feedbackPaso.facilidad,
+      comentarios: comentarios ?? this.feedbackPaso.comentarios,
+      camposAutocompletados: this.feedbackPaso.camposAutocompletados,
+      camposManuales: this.feedbackPaso.camposManuales
+    });
+    this.actualizarFlujoParaPaciente(this.flujoAsignado.pacienteId);
+  }
+
+  private estaPasoCompletado(pasoId: string): boolean {
+    if (!this.flujoAsignado) {
+      return false;
+    }
+    return this.flujoAsignado.ejecucion.some(e => e.pasoId === pasoId && !!e.fin);
+  }
+
+  private getPasoMenuRealId(): string | null {
+    if (!this.flujoAsignado) {
+      return null;
+    }
+    const pasoId = this.flujoAsignado.modoEjecutado === 'con-ia' ? 'evaluacion_ia_3' : 'evaluacion_3';
+    return this.pasosFlujo.some(p => p.id === pasoId) ? pasoId : null;
+  }
+
+  private getPasoCierrePautaId(): string | null {
+    if (!this.flujoAsignado) {
+      return null;
+    }
+    const nuevoPaso = this.flujoAsignado.modoEjecutado === 'con-ia' ? 'evaluacion_ia_4' : 'evaluacion_4';
+    if (this.pasosFlujo.some(p => p.id === nuevoPaso)) {
+      return nuevoPaso;
+    }
+
+    const pasoLegacy = this.flujoAsignado.modoEjecutado === 'con-ia' ? 'evaluacion_ia_3' : 'evaluacion_3';
+    return this.pasosFlujo.some(p => p.id === pasoLegacy) ? pasoLegacy : null;
   }
 
   getProgresoFlujo(): number {

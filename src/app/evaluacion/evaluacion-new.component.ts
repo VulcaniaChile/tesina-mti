@@ -7,11 +7,11 @@ import { DataService } from '../services/data.service';
 import { Paciente, PautaNutricional } from '../models/nutricion.models';
 
 @Component({
-  selector: 'app-evaluacion',
+  selector: 'app-evaluacion-new',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './evaluacion.component.html',
-  styleUrl: './evaluacion.component.scss'
+  templateUrl: './evaluacion-new.component.html',
+  styleUrl: './evaluacion-new.component.scss'
 })
 export class EvaluacionComponent implements OnInit {
   isAIEnabled = false;

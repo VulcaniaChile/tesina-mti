@@ -1,0 +1,5 @@
+<span class="macro-tag" [ngClass]="[toneClass, compact ? 'macro-tag-compact' : '']">
+  <i class="fas" [ngClass]="iconClass" aria-hidden="true"></i>
+  <span class="macro-tag-label">{{ label }}</span>
+  <span class="macro-tag-value" *ngIf="showValue">{{ grams | number:'1.0-1' }}g</span>
+</span>

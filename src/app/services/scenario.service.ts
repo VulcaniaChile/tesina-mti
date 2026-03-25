@@ -227,6 +227,10 @@ export class ScenarioService {
     }
   }
 
+  syncWithWorkflowNow(): void {
+    this.syncProgressWithWorkflow();
+  }
+
   private syncScenarioAssignment(scenario: ScenarioDefinition): void {
     const orden: OrdenValidacion = scenario.mode === 'con-ia' ? 'ia-primero' : 'manual-primero';
     try {
@@ -254,22 +258,23 @@ export class ScenarioService {
 
     const scenario = this.getScenario(progress.scenarioId);
     const flujo = this.workflowService.getFlujoById(scenario.flujoId);
-    const asignacion = this.workflowService.getAsignacionActiva(scenario.patientId);
-    if (!flujo || !asignacion || asignacion.flujoId !== scenario.flujoId) {
+    const asignacion = this.getLatestScenarioAssignment(scenario.patientId, scenario.flujoId);
+    if (!flujo || !asignacion) {
       return;
     }
 
     const sequentiallyCompleted = this.getCompletedVisitsFromWorkflow(flujo, scenario.visits, asignacion.ejecucion);
+
+    if (sequentiallyCompleted.length === scenario.visits.length) {
+      this.finishScenario(scenario.id, sequentiallyCompleted);
+      return;
+    }
+
     const hasChanges =
       sequentiallyCompleted.length !== progress.completedVisits.length ||
       sequentiallyCompleted.some((id, index) => progress.completedVisits[index] !== id);
 
     if (!hasChanges) {
-      return;
-    }
-
-    if (sequentiallyCompleted.length === scenario.visits.length) {
-      this.finishScenario(scenario.id, sequentiallyCompleted);
       return;
     }
 
@@ -285,6 +290,42 @@ export class ScenarioService {
       stepIndex: sequentiallyCompleted.length
     };
     this.persistProgress(updatedProgress);
+  }
+
+  private getLatestScenarioAssignment(patientId: string, flujoId: string): FlujoAsignado | null {
+    const matching = this.workflowService
+      .getAsignacionesByPaciente(patientId)
+      .filter(asignacion => asignacion.flujoId === flujoId);
+
+    if (!matching.length) {
+      return null;
+    }
+
+    const activeAssignments = matching.filter(a => a.estado !== 'completado');
+    if (activeAssignments.length) {
+      return [...activeAssignments].sort((a, b) => {
+        const dateA = new Date(a.fechaAsignacion).getTime();
+        const dateB = new Date(b.fechaAsignacion).getTime();
+        return dateB - dateA;
+      })[0];
+    }
+
+    return [...matching].sort((a, b) => {
+      const endA = a.ejecucion
+        .filter(e => !!e.fin)
+        .map(e => new Date(e.fin as string).getTime())
+        .sort((x, y) => y - x)[0] ?? 0;
+      const endB = b.ejecucion
+        .filter(e => !!e.fin)
+        .map(e => new Date(e.fin as string).getTime())
+        .sort((x, y) => y - x)[0] ?? 0;
+      if (endA !== endB) {
+        return endB - endA;
+      }
+      const dateA = new Date(a.fechaAsignacion).getTime();
+      const dateB = new Date(b.fechaAsignacion).getTime();
+      return dateB - dateA;
+    })[0];
   }
 
   private getCompletedVisitsFromWorkflow(
@@ -417,7 +458,9 @@ export class ScenarioService {
         expectedOutcome: 'Pauta guardada y flujo de simulación completado.',
         targetMinutes: ia ? 10 : 15,
         route: 'evaluacion',
-        completionPasoIds: [ia ? 'evaluacion_ia_3' : 'evaluacion_3']
+        completionPasoIds: ia
+          ? ['evaluacion_ia_3', 'evaluacion_ia_4']
+          : ['evaluacion_3', 'evaluacion_4']
       }
     ];
   }
@@ -498,7 +541,20 @@ export class ScenarioService {
     const assignments = this.workflowService.getAsignacionesByPaciente(scenario.patientId)
       .filter(a => a.flujoId === scenario.flujoId && a.estado === 'completado');
     const latestAssignment = assignments
-      .sort((a, b) => new Date(b.fechaAsignacion).getTime() - new Date(a.fechaAsignacion).getTime())[0];
+      .sort((a, b) => {
+        const endA = a.ejecucion
+          .filter(e => !!e.fin)
+          .map(e => new Date(e.fin as string).getTime())
+          .sort((x, y) => y - x)[0] ?? 0;
+        const endB = b.ejecucion
+          .filter(e => !!e.fin)
+          .map(e => new Date(e.fin as string).getTime())
+          .sort((x, y) => y - x)[0] ?? 0;
+        if (endA !== endB) {
+          return endB - endA;
+        }
+        return new Date(b.fechaAsignacion).getTime() - new Date(a.fechaAsignacion).getTime();
+      })[0];
 
     const finishedAt = latestAssignment?.ejecucion
       .filter(e => e.fin)

@@ -33,14 +33,6 @@
         </button>
       </div>
     </div>
-  </ng-container>
-
-  <ng-template #scenarioInProgress>
-    <div class="current-scenario">
-      <div class="current-header">
-        <div>
-          <p class="label">Flujo en curso</p>
-          <h5>{{ currentScenario?.title }}</h5>
 
     <div class="scenario-results" *ngIf="hasSummaries">
       <div class="results-header">
@@ -90,6 +82,14 @@
         </div>
       </div>
     </div>
+  </ng-container>
+
+  <ng-template #scenarioInProgress>
+    <div class="current-scenario">
+      <div class="current-header">
+        <div>
+          <p class="label">Flujo en curso</p>
+          <h5>{{ currentScenario?.title }}</h5>
           <span class="patient">{{ currentScenario?.patientName }} · {{ currentScenario?.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}</span>
         </div>
         <button class="btn btn-link" (click)="resetScenario(currentScenario!.id)">Cancelar flujo</button>

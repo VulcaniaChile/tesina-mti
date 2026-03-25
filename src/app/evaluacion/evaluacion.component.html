@@ -210,19 +210,25 @@
                 <div class="col-6 col-md-3">
                   <div class="border rounded p-3">
                     <h4 class="text-success mb-0">{{ pautaNutricional.proteinas }}g</h4>
-                    <small class="text-muted">Proteínas</small>
+                    <div class="mt-1">
+                      <app-macro-tag macro="proteina" [compact]="true"></app-macro-tag>
+                    </div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="border rounded p-3">
                     <h4 class="text-warning mb-0">{{ pautaNutricional.carbohidratos }}g</h4>
-                    <small class="text-muted">Carbohidratos</small>
+                    <div class="mt-1">
+                      <app-macro-tag macro="carbohidrato" [compact]="true"></app-macro-tag>
+                    </div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="border rounded p-3">
                     <h4 class="text-info mb-0">{{ pautaNutricional.grasas }}g</h4>
-                    <small class="text-muted">Grasas</small>
+                    <div class="mt-1">
+                      <app-macro-tag macro="grasa" [compact]="true"></app-macro-tag>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -277,7 +283,7 @@
         <button class="btn btn-dark"
                 (click)="continuarPaso2()"
                 [disabled]="scenarioBlockingErrors.length > 0">
-          Continuar al Subpaso 2
+            Generar pauta nutricional
           <i class="fas fa-arrow-right ms-2"></i>
         </button>
       </div>
@@ -363,7 +369,9 @@
         <div class="col-6 col-md-3">
           <div class="macro-target-card" [class.status-ok]="isMacroOnTarget('proteinas')" [class.status-alert]="!isMacroOnTarget('proteinas')">
             <h4 class="text-success mb-0">{{ pautaNutricional.proteinas }}g</h4>
-            <small class="text-muted d-block">Proteínas</small>
+            <div class="my-1">
+              <app-macro-tag macro="proteina" [compact]="true"></app-macro-tag>
+            </div>
             <small class="text-muted">Asignadas: {{ totals.proteinas | number:'1.0-0' }}g</small>
             <span class="status-pill" [class.ok]="isMacroOnTarget('proteinas')" [class.alert]="!isMacroOnTarget('proteinas')">
               {{ isMacroOnTarget('proteinas') ? 'En rango' : 'Ajustar' }}
@@ -373,7 +381,9 @@
         <div class="col-6 col-md-3">
           <div class="macro-target-card" [class.status-ok]="isMacroOnTarget('carbohidratos')" [class.status-alert]="!isMacroOnTarget('carbohidratos')">
             <h4 class="text-warning mb-0">{{ pautaNutricional.carbohidratos }}g</h4>
-            <small class="text-muted d-block">Carbohidratos</small>
+            <div class="my-1">
+              <app-macro-tag macro="carbohidrato" [compact]="true"></app-macro-tag>
+            </div>
             <small class="text-muted">Asignadas: {{ totals.carbohidratos | number:'1.0-0' }}g</small>
             <span class="status-pill" [class.ok]="isMacroOnTarget('carbohidratos')" [class.alert]="!isMacroOnTarget('carbohidratos')">
               {{ isMacroOnTarget('carbohidratos') ? 'En rango' : 'Ajustar' }}
@@ -383,7 +393,9 @@
         <div class="col-6 col-md-3">
           <div class="macro-target-card" [class.status-ok]="isMacroOnTarget('grasas')" [class.status-alert]="!isMacroOnTarget('grasas')">
             <h4 class="text-info mb-0">{{ pautaNutricional.grasas }}g</h4>
-            <small class="text-muted d-block">Grasas</small>
+            <div class="my-1">
+              <app-macro-tag macro="grasa" [compact]="true"></app-macro-tag>
+            </div>
             <small class="text-muted">Asignadas: {{ totals.grasas | number:'1.0-0' }}g</small>
             <span class="status-pill" [class.ok]="isMacroOnTarget('grasas')" [class.alert]="!isMacroOnTarget('grasas')">
               {{ isMacroOnTarget('grasas') ? 'En rango' : 'Ajustar' }}
@@ -414,9 +426,7 @@
         <div class="macro-tracker-card" *ngFor="let macro of ['proteinas', 'carbohidratos', 'grasas']">
           <ng-container *ngIf="getMacroProgress(macro) as progress">
             <div class="tracker-topline">
-              <span class="label" [class.text-success]="macro === 'proteinas'" [class.text-warning]="macro === 'carbohidratos'" [class.text-info]="macro === 'grasas'">
-                {{ macro | titlecase }}
-              </span>
+              <app-macro-tag [macro]="mapMacroResumenToDominante(macro)" [compact]="true"></app-macro-tag>
               <span class="delta" [class.text-success]="Math.abs(progress.delta) <= progress.target * 0.08" [class.text-danger]="Math.abs(progress.delta) > progress.target * 0.08">
                 {{ progress.delta > 0 ? 'Faltan' : 'Exceso' }} {{ Math.abs(progress.delta) | number:'1.0-0' }}g
               </span>
@@ -476,13 +486,7 @@
               <div class="macro-card-header">
                 <h5 class="mb-1">{{ portion.label | uppercase }}</h5>
                 <div class="d-flex align-items-center gap-1">
-                  <span class="badge" [ngClass]="{
-                    'bg-success-subtle border border-success text-success': portion.macroDominante === 'proteina',
-                    'bg-warning-subtle border border-warning text-warning': portion.macroDominante === 'carbohidrato',
-                    'bg-info-subtle border border-info text-info': portion.macroDominante === 'grasa'
-                  }">
-                    {{ portion.macroDominante | titlecase }}
-                  </span>
+                  <app-macro-tag [macro]="portion.macroDominante" [compact]="true"></app-macro-tag>
                   <span class="badge bg-dark-subtle text-dark border" *ngIf="isPortionCustomized(portion)">Personalizada</span>
                 </div>
               </div>
@@ -533,13 +537,7 @@
                         <strong>{{ getMacroLabel(macro) | titlecase }}</strong>
                         <small class="d-block text-muted">1 porción = {{ getMacroUnitGrams(macro) }}g · {{ getMacroUnitCalories(macro) }} kcal</small>
                       </div>
-                      <span class="badge" [ngClass]="{
-                        'bg-success-subtle border border-success text-success': macro === 'proteina',
-                        'bg-warning-subtle border border-warning text-warning': macro === 'carbohidrato',
-                        'bg-info-subtle border border-info text-info': macro === 'grasa'
-                      }">
-                        {{ macro | titlecase }}
-                      </span>
+                      <app-macro-tag [macro]="macro" [compact]="true"></app-macro-tag>
                     </div>
                     <div class="macro-slider mt-2">
                       <label class="small text-muted">Porciones asignadas</label>
@@ -592,11 +590,7 @@
                   </div>
                 </div>
               <div class="macro-chip" *ngFor="let macro of ['proteinas', 'carbohidratos', 'grasas']">
-                <ng-container [ngSwitch]="macro">
-                  <span *ngSwitchCase="'proteinas'" class="label text-success">Proteínas</span>
-                  <span *ngSwitchCase="'carbohidratos'" class="label text-warning">Carbohidratos</span>
-                  <span *ngSwitchCase="'grasas'" class="label text-info">Grasas</span>
-                </ng-container>
+                <app-macro-tag [macro]="mapMacroResumenToDominante(macro)" [compact]="true"></app-macro-tag>
                 <ng-container *ngIf="getMacroProgress(macro) as progress">
                   <span>{{ progress.current }}g / {{ progress.target }}g</span>
                   <small [class.text-success]="Math.abs(progress.delta) <= progress.target * 0.08"
@@ -649,19 +643,16 @@
                 <div class="dish-item" *ngFor="let meal of suggestion.suggestedMeals">
                   <div class="dish-info">
                     <strong>{{ meal.nombre }}</strong>
-                    <small class="text-muted d-block">
-                      {{ meal.calorias }} kcal • 
-                      P: {{ meal.proteinas }}g • 
-                      C: {{ meal.carbohidratos }}g • 
-                      G: {{ meal.grasas }}g
-                    </small>
-                    <span class="badge badge-sm mt-1" [ngClass]="{
-                      'bg-success-subtle text-success': meal.macroDominante === 'proteina',
-                      'bg-warning-subtle text-warning': meal.macroDominante === 'carbohidrato',
-                      'bg-info-subtle text-info': meal.macroDominante === 'grasa'
-                    }">
-                      {{ meal.porcionGramos }}g • {{ meal.origen }}
-                    </span>
+                    <small class="text-muted d-block">{{ meal.calorias }} kcal</small>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                      <app-macro-tag macro="proteina" [grams]="meal.proteinas" [compact]="true"></app-macro-tag>
+                      <app-macro-tag macro="carbohidrato" [grams]="meal.carbohidratos" [compact]="true"></app-macro-tag>
+                      <app-macro-tag macro="grasa" [grams]="meal.grasas" [compact]="true"></app-macro-tag>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                      <app-macro-tag [macro]="meal.macroDominante" [compact]="true"></app-macro-tag>
+                      <span class="badge badge-sm bg-light text-dark border">{{ meal.porcionGramos }}g • {{ meal.origen }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -671,13 +662,17 @@
               </div>
 
               <div class="suggestion-totals mt-2">
-                <small class="text-muted">
-                  <strong>Totales sugeridos:</strong> 
-                  {{ suggestion.totalCalorias }} kcal • 
-                  P: {{ suggestion.totalProteinas | number:'1.0-1' }}g • 
-                  C: {{ suggestion.totalCarbohidratos | number:'1.0-1' }}g • 
-                  G: {{ suggestion.totalGrasas | number:'1.0-1' }}g
-                </small>
+                <div class="suggestion-totals-card">
+                  <div class="totals-title-row">
+                    <small class="text-muted">Totales sugeridos</small>
+                    <span class="totals-calories">{{ suggestion.totalCalorias }} kcal</span>
+                  </div>
+                  <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                    <app-macro-tag macro="proteina" [grams]="suggestion.totalProteinas" [compact]="true"></app-macro-tag>
+                    <app-macro-tag macro="carbohidrato" [grams]="suggestion.totalCarbohidratos" [compact]="true"></app-macro-tag>
+                    <app-macro-tag macro="grasa" [grams]="suggestion.totalGrasas" [compact]="true"></app-macro-tag>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
