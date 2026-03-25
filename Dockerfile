@@ -16,4 +16,4 @@ FROM nginx:alpine
 COPY --from=build /source/dist/sistema-nutricional/browser /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 8085
+EXPOSE 8080
