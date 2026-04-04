@@ -1,4 +1,19 @@
 <div class="wizard" *ngIf="!loading">
+  <div class="wizard-state-strip">
+    <div class="state-chip" [class.active]="!currentScenario">
+      <span>Paso 1</span>
+      <strong>Seleccionar escenario</strong>
+    </div>
+    <div class="state-chip" [class.active]="!!currentScenario && !!currentVisit">
+      <span>Paso 2</span>
+      <strong>Flujo en curso</strong>
+    </div>
+    <div class="state-chip" [class.active]="!currentVisit && !!currentScenario">
+      <span>Paso 3</span>
+      <strong>Resultado final</strong>
+    </div>
+  </div>
+
   <div class="wizard-header">
     <div>
       <h4>Escenarios de Prueba</h4>
@@ -100,9 +115,15 @@
           <p class="phase-caption">Fase actual</p>
           <strong>{{ getCurrentPhaseTitle() }}</strong>
         </div>
-        <span class="visit-status" [class]="'visit-status ' + getCurrentPhaseStatusClass()">
-          {{ getCurrentPhaseStatusLabel() }}
-        </span>
+        <div class="phase-right-block">
+          <div class="time-chip" *ngIf="elapsedScenarioTime">
+            <span>Tiempo de flujo</span>
+            <strong>{{ elapsedScenarioTime }}</strong>
+          </div>
+          <span class="visit-status" [class]="'visit-status ' + getCurrentPhaseStatusClass()">
+            {{ getCurrentPhaseStatusLabel() }}
+          </span>
+        </div>
       </div>
 
       <div class="preset-banner" *ngIf="currentScenario?.patientPreset">
@@ -140,6 +161,10 @@
       </div>
 
       <div class="visit-details" *ngIf="currentVisit">
+        <div class="primary-action-hint">
+          <p class="hint-label">Acción principal de esta etapa</p>
+          <strong>Completar los datos solicitados en el módulo activo y registrar el resultado del paso.</strong>
+        </div>
         <div class="phase-setup" *ngIf="currentVisit.id === 'visita_1' && currentScenario?.patientPreset">
           <p class="phase-label">Cargar antes de iniciar:</p>
           <ul>

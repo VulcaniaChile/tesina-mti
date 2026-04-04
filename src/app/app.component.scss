@@ -18,11 +18,14 @@
 .main-panel {
 	flex: 1;
 	position: relative;
+	display: flex;
+	flex-direction: column;
 }
 
 .content-wrapper {
 	position: relative;
 	min-height: calc(100vh - 56px);
+	flex: 1;
 }
 
 .content-scroll {
@@ -57,6 +60,68 @@
 	border-left: 1px solid #dfe4f0;
 	background: #fff;
 	box-shadow: -10px 0 30px rgba(15, 23, 42, 0.06);
+	display: flex;
+	flex-direction: column;
+}
+
+.panel-role {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.85rem 1.1rem;
+	border-bottom: 1px solid #e2e8f0;
+
+	h2 {
+		margin: 0.1rem 0;
+		font-size: 1rem;
+		font-weight: 700;
+		color: #0f172a;
+	}
+
+	small {
+		color: #4b5563;
+	}
+}
+
+.role-eyebrow {
+	margin: 0;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #1d4ed8;
+}
+
+.panel-role-main {
+	background: linear-gradient(90deg, #f8fbff 0%, #f3f8ff 100%);
+}
+
+.panel-role-wizard {
+	background: linear-gradient(90deg, #fffaf2 0%, #fff7ea 100%);
+}
+
+.role-state {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-weight: 700;
+	padding: 0.35rem 0.7rem;
+	border-radius: 999px;
+	white-space: nowrap;
+	border: 1px solid transparent;
+}
+
+.role-state-live {
+	background: #dcfce7;
+	border-color: #86efac;
+	color: #166534;
+}
+
+.role-state-locked {
+	background: #ffedd5;
+	border-color: #fdba74;
+	color: #9a3412;
 }
 
 footer {
@@ -73,6 +138,11 @@ footer {
 		box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.08);
 		border-left: none;
 		border-top: 1px solid #dfe4f0;
+	}
+
+	.panel-role {
+		align-items: flex-start;
+		flex-direction: column;
 	}
 
 	.content-scroll {

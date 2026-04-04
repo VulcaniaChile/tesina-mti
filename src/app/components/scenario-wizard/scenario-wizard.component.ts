@@ -30,6 +30,9 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
   private lastCompletionSignature: string | null = null;
   private currentRouteModule = '';
   private lastVisitRoute: string | null = null;
+  private scenarioStartedAt: string | null = null;
+  private nowTick = Date.now();
+  private timerHandle: ReturnType<typeof setInterval> | null = null;
 
   @Output() scenarioChange = new EventEmitter<boolean>();
 
@@ -55,8 +58,10 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
           this.currentScenario = null;
           this.visitId = null;
           this.completedVisits = [];
+          this.scenarioStartedAt = null;
           this.scenarioChange.emit(false);
           this.lastVisitRoute = null;
+          this.stopTimer();
 
           if (this.lastActiveScenarioId && this.scenarioStates[this.lastActiveScenarioId] === 'completed') {
             this.pendingCompletedScenarioId = this.lastActiveScenarioId;
@@ -68,8 +73,10 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
           this.currentScenario = this.scenarioService.getScenario(progress.scenarioId);
           this.visitId = progress.visitId;
           this.completedVisits = progress.completedVisits;
+          this.scenarioStartedAt = progress.startedAt;
           this.scenarioChange.emit(true);
           this.lastActiveScenarioId = progress.scenarioId;
+          this.startTimer();
           this.navigateToCurrentVisit();
         }
         this.loading = false;
@@ -94,6 +101,29 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.stopTimer();
+  }
+
+  get elapsedScenarioTime(): string {
+    if (!this.scenarioStartedAt) {
+      return '';
+    }
+
+    const startedAtMs = new Date(this.scenarioStartedAt).getTime();
+    if (!Number.isFinite(startedAtMs)) {
+      return '';
+    }
+
+    const elapsedMs = Math.max(0, this.nowTick - startedAtMs);
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${this.pad2(hours)}:${this.pad2(minutes)}:${this.pad2(seconds)}`;
+    }
+    return `${this.pad2(minutes)}:${this.pad2(seconds)}`;
   }
 
   get currentVisit() {
@@ -331,5 +361,29 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     }
 
     return this.visitId;
+  }
+
+  private startTimer(): void {
+    if (this.timerHandle) {
+      return;
+    }
+
+    this.nowTick = Date.now();
+    this.timerHandle = setInterval(() => {
+      this.nowTick = Date.now();
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (!this.timerHandle) {
+      return;
+    }
+
+    clearInterval(this.timerHandle);
+    this.timerHandle = null;
+  }
+
+  private pad2(value: number): string {
+    return value.toString().padStart(2, '0');
   }
 }

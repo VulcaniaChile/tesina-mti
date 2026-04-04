@@ -19,6 +19,16 @@
 </nav>
 <div class="app-shell">
   <div class="main-panel" [class.panel-blocked]="!scenarioActive">
+    <header class="panel-role panel-role-main">
+      <div>
+        <p class="role-eyebrow">Ejecución clínica</p>
+        <h2>Área operativa principal</h2>
+        <small>Completa evaluación, registros y decisiones nutricionales en este espacio.</small>
+      </div>
+      <span class="role-state" [class.role-state-live]="scenarioActive" [class.role-state-locked]="!scenarioActive">
+        {{ scenarioActive ? 'Edición habilitada' : 'Modo lectura' }}
+      </span>
+    </header>
     <div class="content-wrapper">
       <div class="content-overlay" *ngIf="!scenarioActive">
         <div class="overlay-card">
@@ -35,6 +45,13 @@
     </div>
   </div>
   <aside class="wizard-panel">
+    <header class="panel-role panel-role-wizard">
+      <div>
+        <p class="role-eyebrow">Orquestación experimental</p>
+        <h2>Control de escenario</h2>
+        <small>Define el contexto de prueba, guía el paso activo y captura métricas comparables.</small>
+      </div>
+    </header>
     <app-scenario-wizard (scenarioChange)="onScenarioChange($event)"></app-scenario-wizard>
   </aside>
 </div>
