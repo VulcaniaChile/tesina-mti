@@ -491,6 +491,10 @@
             <i class="fas fa-sliders-h me-1"></i>
             Distribuir macros IA
           </button>
+          <button class="btn btn-primary btn-sm" *ngIf="isAIEnabled" (click)="abrirAsistenteDistribucionIA()" [disabled]="!pautaNutricional.calorias">
+            <i class="fas fa-magic me-1"></i>
+            Asistente IA
+          </button>
           <button class="btn btn-success btn-sm" (click)="sugerirMenuReal()" [disabled]="!planTienePorciones()">
             <i class="fas fa-utensils me-1"></i>
             Sugerir menú real
@@ -718,4 +722,133 @@
 
   <!-- Backdrop del modal -->
   <div class="modal-backdrop fade" [class.show]="showMealSuggestions" *ngIf="showMealSuggestions" (click)="closeMealSuggestions()"></div>
+
+  <!-- Modal de asistente IA para distribución rápida -->
+  <div class="modal fade" id="iaDistributionWizardModal" tabindex="-1" aria-labelledby="iaDistributionWizardModalLabel" aria-hidden="true" [class.show]="showIADistributionWizard" [style.display]="showIADistributionWizard ? 'block' : 'none'">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="iaDistributionWizardModalLabel">
+            <i class="fas fa-magic me-2"></i>
+            Asistente IA de distribución
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="cerrarAsistenteDistribucionIA()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">Responde estas preguntas y aplicamos una distribución inicial de calorías/macros en un clic.</p>
+
+          <div class="wizard-grid">
+            <div class="wizard-question-card">
+              <label class="form-label fw-semibold">1) ¿Cuántas comidas quieres priorizar?</label>
+              <select class="form-select" [(ngModel)]="iaDistributionWizard.mealsPerDay">
+                <option [ngValue]="3">3 comidas principales</option>
+                <option [ngValue]="5">5 tiempos (con colaciones)</option>
+              </select>
+            </div>
+
+            <div class="wizard-question-card">
+              <label class="form-label fw-semibold">2) ¿Qué macro quieres enfatizar?</label>
+              <select class="form-select" [(ngModel)]="iaDistributionWizard.priority">
+                <option value="equilibrado">Equilibrado</option>
+                <option value="proteina">Proteína</option>
+                <option value="carbohidrato">Carbohidratos</option>
+                <option value="grasa">Grasas</option>
+              </select>
+            </div>
+
+            <div class="wizard-question-card">
+              <label class="form-label fw-semibold">3) ¿Cuándo prefieres concentrar carbohidratos?</label>
+              <select class="form-select" [(ngModel)]="iaDistributionWizard.carbTiming">
+                <option value="equilibrado">Distribución equilibrada</option>
+                <option value="temprano">Más temprano (desayuno/mañana)</option>
+                <option value="tarde">Más tarde (almuerzo/cena)</option>
+              </select>
+            </div>
+
+            <div class="wizard-question-card">
+              <label class="form-label fw-semibold d-block">4) Preferencias de cierre diario</label>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="lightDinnerCheck" [(ngModel)]="iaDistributionWizard.lightDinner">
+                <label class="form-check-label" for="lightDinnerCheck">
+                  Cena más liviana
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="includeSnacksCheck" [(ngModel)]="iaDistributionWizard.includeSnacks">
+                <label class="form-check-label" for="includeSnacksCheck">
+                  Incluir colaciones
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-primary mt-3 mb-0">
+            <i class="fas fa-bolt me-2"></i>
+            Esta acción crea una distribución inicial para acelerar el paso. Luego puedes afinar manualmente con sliders.
+          </div>
+
+          <div class="wizard-preview mt-3" *ngIf="getWizardPreviewRows() as previewRows">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0">Vista previa de distribución IA</h6>
+              <small class="text-muted">Total estimado: {{ getWizardPreviewCaloriesTotal() | number:'1.0-0' }} kcal</small>
+            </div>
+
+            <div class="preview-quality" *ngIf="getWizardPreviewQuality() as quality">
+              <span class="quality-pill" [class]="'quality-' + quality.tone">{{ quality.label }}</span>
+              <small class="text-muted">{{ quality.note }}</small>
+              <div class="quality-deltas mt-2">
+                <span>Delta Prot: {{ (quality.proteinaDeltaPct * 100) | number:'1.0-1' }}%</span>
+                <span>Delta Carb: {{ (quality.carboDeltaPct * 100) | number:'1.0-1' }}%</span>
+                <span>Delta Grasa: {{ (quality.grasaDeltaPct * 100) | number:'1.0-1' }}%</span>
+                <span>Delta Kcal: {{ (quality.caloriasDeltaPct * 100) | number:'1.0-1' }}%</span>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Comida</th>
+                    <th class="text-end">Proteína</th>
+                    <th class="text-end">Carbohidrato</th>
+                    <th class="text-end">Grasa</th>
+                    <th class="text-end">Kcal estimadas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of previewRows">
+                    <td>
+                      <strong>{{ row.mealTitle }}</strong>
+                    </td>
+                    <td class="text-end">
+                      {{ row.proteinaG | number:'1.0-0' }}g
+                      <small class="text-muted d-block">{{ (row.proteinaPct * 100) | number:'1.0-0' }}%</small>
+                    </td>
+                    <td class="text-end">
+                      {{ row.carbohidratoG | number:'1.0-0' }}g
+                      <small class="text-muted d-block">{{ (row.carbohidratoPct * 100) | number:'1.0-0' }}%</small>
+                    </td>
+                    <td class="text-end">
+                      {{ row.grasaG | number:'1.0-0' }}g
+                      <small class="text-muted d-block">{{ (row.grasaPct * 100) | number:'1.0-0' }}%</small>
+                    </td>
+                    <td class="text-end fw-semibold">{{ row.caloriasEstimadas | number:'1.0-0' }} kcal</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="cerrarAsistenteDistribucionIA()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="aplicarAsistenteDistribucionIA()">
+            <i class="fas fa-check me-1"></i>
+            Aplicar distribución IA
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop fade" [class.show]="showIADistributionWizard" *ngIf="showIADistributionWizard" (click)="cerrarAsistenteDistribucionIA()"></div>
 </div>

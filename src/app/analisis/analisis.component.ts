@@ -124,16 +124,16 @@ export class AnalisisComponent implements OnInit {
 
     const sinIA = construirMetricas('sin-ia');
     const conIA = construirMetricas('con-ia');
-    const deltaTiempo = sinIA.tiempoPromedio && conIA.tiempoPromedio
+    const deltaTiempo = sinIA.total > 0 && conIA.total > 0
       ? sinIA.tiempoPromedio - conIA.tiempoPromedio
       : 0;
-    const deltaFacilidad = conIA.facilidadPromedio && sinIA.facilidadPromedio
+    const deltaFacilidad = sinIA.total > 0 && conIA.total > 0
       ? conIA.facilidadPromedio - sinIA.facilidadPromedio
       : 0;
-    const deltaInteracciones = sinIA.interaccionesPromedio && conIA.interaccionesPromedio
+    const deltaInteracciones = sinIA.total > 0 && conIA.total > 0
       ? sinIA.interaccionesPromedio - conIA.interaccionesPromedio
       : 0;
-    const deltaManuales = sinIA.manualesPromedio && conIA.manualesPromedio
+    const deltaManuales = sinIA.total > 0 && conIA.total > 0
       ? sinIA.manualesPromedio - conIA.manualesPromedio
       : 0;
 

@@ -123,6 +123,14 @@ export class EvaluacionComponent implements OnInit {
 
   mealSuggestions: MealSuggestion[] = [];
   showMealSuggestions = false;
+  showIADistributionWizard = false;
+  iaDistributionWizard = {
+    mealsPerDay: 5,
+    priority: 'equilibrado' as 'equilibrado' | 'proteina' | 'carbohidrato' | 'grasa',
+    carbTiming: 'equilibrado' as 'equilibrado' | 'temprano' | 'tarde',
+    lightDinner: false,
+    includeSnacks: true
+  };
 
   flujoAsignado: FlujoAsignado | null = null;
   flujoDetalle: FlujoTrabajo | null = null;
@@ -694,6 +702,41 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
+    this.distribuirMacrosConPesos();
+  }
+
+  abrirAsistenteDistribucionIA() {
+    if (!this.isAIEnabled) {
+      return;
+    }
+    if (!this.pautaNutricional.calorias) {
+      alert('Primero calcula los macros diarios antes de usar el asistente IA.');
+      return;
+    }
+    this.registrarInteraccion();
+    this.registrarSugerenciaIA('wizardDistribucion');
+    this.showIADistributionWizard = true;
+  }
+
+  cerrarAsistenteDistribucionIA() {
+    this.showIADistributionWizard = false;
+  }
+
+  aplicarAsistenteDistribucionIA() {
+    if (!this.isAIEnabled || !this.pautaNutricional.calorias) {
+      return;
+    }
+    this.registrarInteraccion();
+    const profile = this.buildWizardDistributionProfile();
+    this.distribuirMacrosConPesos(profile);
+    this.registrarAceptacionIA('wizardDistribucion');
+    this.showIADistributionWizard = false;
+  }
+
+  private distribuirMacrosConPesos(
+    profile?: Record<string, { proteina: number; carbohidrato: number; grasa: number }>
+  ) {
+
     this.resetMealPlan();
 
     const macroTargets: Record<'proteina' | 'carbohidrato' | 'grasa', number> = {
@@ -715,7 +758,7 @@ export class EvaluacionComponent implements OnInit {
         return;
       }
 
-      const weightMap = this.buildMacroWeightMap(macro);
+      const weightMap = this.buildMacroWeightMap(macro, profile);
       const distribution = this.distributePortionsAcrossMeals(totalPortionsNeeded, weightMap);
 
       Object.entries(distribution).forEach(([mealId, count]) => {
@@ -752,10 +795,14 @@ export class EvaluacionComponent implements OnInit {
     this.showMealSuggestions = false;
   }
 
-  private buildMacroWeightMap(macro: 'proteina' | 'carbohidrato' | 'grasa'): Record<string, number> {
+  private buildMacroWeightMap(
+    macro: 'proteina' | 'carbohidrato' | 'grasa',
+    profile?: Record<string, { proteina: number; carbohidrato: number; grasa: number }>
+  ): Record<string, number> {
     const map: Record<string, number> = {};
+    const baseProfile = profile || this.mealMacroDistribution;
     this.dailyMealPlan.meals.forEach(meal => {
-      const preset = this.mealMacroDistribution[meal.id];
+      const preset = baseProfile[meal.id];
       map[meal.id] = preset ? preset[macro] : 0;
     });
     const totalWeight = Object.values(map).reduce((sum, value) => sum + value, 0);
@@ -793,6 +840,208 @@ export class EvaluacionComponent implements OnInit {
     }
 
     return result;
+  }
+
+  private buildWizardDistributionProfile(): Record<string, { proteina: number; carbohidrato: number; grasa: number }> {
+    const base: Record<string, { proteina: number; carbohidrato: number; grasa: number }> = {
+      desayuno: { proteina: 0.25, carbohidrato: 0.3, grasa: 0.2 },
+      media_manana: { proteina: 0.15, carbohidrato: 0.15, grasa: 0.1 },
+      almuerzo: { proteina: 0.3, carbohidrato: 0.3, grasa: 0.3 },
+      colacion: { proteina: 0.1, carbohidrato: 0.1, grasa: 0.15 },
+      cena: { proteina: 0.2, carbohidrato: 0.15, grasa: 0.25 }
+    };
+
+    if (this.iaDistributionWizard.mealsPerDay === 3) {
+      base.media_manana = { proteina: 0.03, carbohidrato: 0.03, grasa: 0.03 };
+      base.colacion = { proteina: 0.03, carbohidrato: 0.03, grasa: 0.03 };
+      base.desayuno.proteina += 0.07;
+      base.almuerzo.carbohidrato += 0.07;
+      base.cena.grasa += 0.07;
+    }
+
+    if (!this.iaDistributionWizard.includeSnacks) {
+      base.media_manana = { proteina: 0.01, carbohidrato: 0.01, grasa: 0.01 };
+      base.colacion = { proteina: 0.01, carbohidrato: 0.01, grasa: 0.01 };
+      base.desayuno.proteina += 0.05;
+      base.almuerzo.carbohidrato += 0.05;
+      base.cena.grasa += 0.05;
+    }
+
+    if (this.iaDistributionWizard.priority === 'proteina') {
+      base.desayuno.proteina += 0.05;
+      base.almuerzo.proteina += 0.05;
+      base.cena.proteina += 0.05;
+    }
+    if (this.iaDistributionWizard.priority === 'carbohidrato') {
+      base.desayuno.carbohidrato += 0.06;
+      base.almuerzo.carbohidrato += 0.06;
+      base.cena.carbohidrato += 0.03;
+    }
+    if (this.iaDistributionWizard.priority === 'grasa') {
+      base.almuerzo.grasa += 0.05;
+      base.cena.grasa += 0.07;
+    }
+
+    if (this.iaDistributionWizard.carbTiming === 'temprano') {
+      base.desayuno.carbohidrato += 0.1;
+      base.media_manana.carbohidrato += 0.05;
+      base.cena.carbohidrato = Math.max(0.05, base.cena.carbohidrato - 0.12);
+    }
+    if (this.iaDistributionWizard.carbTiming === 'tarde') {
+      base.cena.carbohidrato += 0.1;
+      base.almuerzo.carbohidrato += 0.05;
+      base.desayuno.carbohidrato = Math.max(0.08, base.desayuno.carbohidrato - 0.1);
+    }
+
+    if (this.iaDistributionWizard.lightDinner) {
+      base.cena.grasa = Math.max(0.08, base.cena.grasa - 0.1);
+      base.cena.carbohidrato = Math.max(0.08, base.cena.carbohidrato - 0.08);
+      base.almuerzo.grasa += 0.06;
+      base.almuerzo.carbohidrato += 0.06;
+    }
+
+    return this.normalizeDistributionProfile(base);
+  }
+
+  private normalizeDistributionProfile(
+    profile: Record<string, { proteina: number; carbohidrato: number; grasa: number }>
+  ): Record<string, { proteina: number; carbohidrato: number; grasa: number }> {
+    (['proteina', 'carbohidrato', 'grasa'] as const).forEach(macro => {
+      const sum = Object.values(profile).reduce((acc, meal) => acc + Math.max(0, meal[macro]), 0);
+      if (sum <= 0) {
+        const even = 1 / Object.keys(profile).length;
+        Object.values(profile).forEach(meal => {
+          meal[macro] = even;
+        });
+        return;
+      }
+
+      Object.values(profile).forEach(meal => {
+        meal[macro] = Math.max(0, meal[macro]) / sum;
+      });
+    });
+
+    return profile;
+  }
+
+  getWizardPreviewRows() {
+    if (!this.pautaNutricional.calorias) {
+      return [] as Array<{
+        mealId: string;
+        mealTitle: string;
+        proteinaPct: number;
+        carbohidratoPct: number;
+        grasaPct: number;
+        proteinaG: number;
+        carbohidratoG: number;
+        grasaG: number;
+        caloriasEstimadas: number;
+      }>;
+    }
+
+    const profile = this.buildWizardDistributionProfile();
+    return Object.entries(profile).map(([mealId, weights]) => {
+      const proteinaG = this.pautaNutricional.proteinas * weights.proteina;
+      const carbohidratoG = this.pautaNutricional.carbohidratos * weights.carbohidrato;
+      const grasaG = this.pautaNutricional.grasas * weights.grasa;
+      const caloriasEstimadas = proteinaG * 4 + carbohidratoG * 4 + grasaG * 9;
+
+      return {
+        mealId,
+        mealTitle: this.getMealTitleById(mealId),
+        proteinaPct: weights.proteina,
+        carbohidratoPct: weights.carbohidrato,
+        grasaPct: weights.grasa,
+        proteinaG,
+        carbohidratoG,
+        grasaG,
+        caloriasEstimadas
+      };
+    });
+  }
+
+  getWizardPreviewCaloriesTotal(): number {
+    return this.getWizardPreviewRows().reduce((sum, row) => sum + row.caloriasEstimadas, 0);
+  }
+
+  getWizardPreviewQuality() {
+    const proteinaPortion = this.availablePortions.find(p => p.id === this.macroPortionMap.proteina);
+    const carboPortion = this.availablePortions.find(p => p.id === this.macroPortionMap.carbohidrato);
+    const grasaPortion = this.availablePortions.find(p => p.id === this.macroPortionMap.grasa);
+
+    if (!proteinaPortion || !carboPortion || !grasaPortion || !this.pautaNutricional.calorias) {
+      return {
+        label: 'Sin datos',
+        tone: 'muted',
+        note: 'Completa macros para evaluar calidad de ajuste.',
+        proteinaDeltaPct: 0,
+        carboDeltaPct: 0,
+        grasaDeltaPct: 0,
+        caloriasDeltaPct: 0
+      };
+    }
+
+    const proteinaUnit = this.getDominantGramsValue(proteinaPortion);
+    const carboUnit = this.getDominantGramsValue(carboPortion);
+    const grasaUnit = this.getDominantGramsValue(grasaPortion);
+
+    const proteinaTarget = this.pautaNutricional.proteinas;
+    const carboTarget = this.pautaNutricional.carbohidratos;
+    const grasaTarget = this.pautaNutricional.grasas;
+
+    const proteinaProjected = Math.round(proteinaTarget / Math.max(1, proteinaUnit)) * proteinaUnit;
+    const carboProjected = Math.round(carboTarget / Math.max(1, carboUnit)) * carboUnit;
+    const grasaProjected = Math.round(grasaTarget / Math.max(1, grasaUnit)) * grasaUnit;
+
+    const caloriasProjected = proteinaProjected * 4 + carboProjected * 4 + grasaProjected * 9;
+
+    const proteinaDeltaPct = proteinaTarget > 0 ? Math.abs(proteinaProjected - proteinaTarget) / proteinaTarget : 0;
+    const carboDeltaPct = carboTarget > 0 ? Math.abs(carboProjected - carboTarget) / carboTarget : 0;
+    const grasaDeltaPct = grasaTarget > 0 ? Math.abs(grasaProjected - grasaTarget) / grasaTarget : 0;
+    const caloriasDeltaPct = this.pautaNutricional.calorias > 0
+      ? Math.abs(caloriasProjected - this.pautaNutricional.calorias) / this.pautaNutricional.calorias
+      : 0;
+
+    const maxMacroDelta = Math.max(proteinaDeltaPct, carboDeltaPct, grasaDeltaPct);
+    const macroTol = this.macroTolerance;
+
+    if (maxMacroDelta <= macroTol && caloriasDeltaPct <= 0.05) {
+      return {
+        label: 'Muy alineado',
+        tone: 'success',
+        note: 'La distribución proyectada cae dentro de tolerancias objetivo.',
+        proteinaDeltaPct,
+        carboDeltaPct,
+        grasaDeltaPct,
+        caloriasDeltaPct
+      };
+    }
+
+    if (maxMacroDelta <= macroTol * 1.5 && caloriasDeltaPct <= 0.08) {
+      return {
+        label: 'Alineado',
+        tone: 'warning',
+        note: 'La propuesta es utilizable, pero probablemente requerirá ajuste fino.',
+        proteinaDeltaPct,
+        carboDeltaPct,
+        grasaDeltaPct,
+        caloriasDeltaPct
+      };
+    }
+
+    return {
+      label: 'Requiere ajuste',
+      tone: 'danger',
+      note: 'La granularidad de porciones puede dejar desviaciones relevantes.',
+      proteinaDeltaPct,
+      carboDeltaPct,
+      grasaDeltaPct,
+      caloriasDeltaPct
+    };
+  }
+
+  private getMealTitleById(mealId: string): string {
+    return this.dailyMealPlan.meals.find(meal => meal.id === mealId)?.title || mealId;
   }
 
   private buildEmptyDailyPlan(): DailyMealPlan {
@@ -1185,16 +1434,11 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
-    this.workflowService.completePaso(this.flujoAsignado.id, pasoPacientePendiente.id, {
-      facilidad: this.isAIEnabled ? 4 : 3,
-      camposAutocompletados: this.isAIEnabled ? Math.max(2, this.camposSugeridosIA.size) : 0,
-      camposManuales: Math.max(2, this.camposEditadosPaso.size),
-      interacciones: this.metricasPasoRuntime.interacciones,
-      iaSugerencias: this.metricasPasoRuntime.iaSugerencias,
-      iaAceptadas: this.metricasPasoRuntime.iaAceptadas,
-      iaCorregidas: this.metricasPasoRuntime.iaCorregidas,
-      comentarios: 'Cierre automático de fase paciente al iniciar evaluación.'
-    });
+    this.workflowService.completePaso(
+      this.flujoAsignado.id,
+      pasoPacientePendiente.id,
+      this.buildPayloadPaso('Cierre automático de fase paciente al iniciar evaluación.')
+    );
 
     this.flujoAsignado = this.workflowService.getAsignacionActiva(this.flujoAsignado.pacienteId) || this.flujoAsignado;
   }
@@ -1267,18 +1511,18 @@ export class EvaluacionComponent implements OnInit {
     if (!this.isAIEnabled || this.estimacionMasaGrasa === 0 || this.estimacionMasaMagra === 0) {
       return;
     }
-    let aplicados = 0;
+    const camposAceptados: string[] = [];
     if (forzar || !this.paciente.masaGrasa) {
       this.paciente.masaGrasa = this.estimacionMasaGrasa.toString();
-      aplicados += 1;
+      camposAceptados.push('masaGrasa');
     }
     if (forzar || !this.paciente.masaMagra) {
       this.paciente.masaMagra = this.estimacionMasaMagra.toString();
-      aplicados += 1;
+      camposAceptados.push('masaMagra');
     }
-    if (forzar && aplicados > 0) {
-      this.registrarAceptacionIA('masaGrasa', 'masaMagra');
-      this.registrarInteraccion();
+    if (camposAceptados.length > 0) {
+      this.registrarAceptacionIA(...camposAceptados);
+      this.registrarInteraccion(forzar ? 1 : 0);
     }
   }
 
