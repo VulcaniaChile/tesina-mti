@@ -202,10 +202,10 @@
                 </div>
               </div>
 
-              <div class="alert" [class]="isAIEnabled ? 'alert-primary' : 'alert-info'">
+              <div class="alert alert-info">
                 <h6>
-                  <i [class]="isAIEnabled ? 'fas fa-robot' : 'fas fa-lightbulb'" class="me-2"></i>
-                  {{ isAIEnabled ? 'Recomendaciones IA' : 'Recomendaciones Generales' }}
+                  <i class="fas fa-clipboard-check me-2"></i>
+                  Recomendaciones del plan
                 </h6>
                 <pre class="mb-0" style="font-family: inherit; white-space: pre-wrap;">{{ pautaNutricional.recomendaciones }}</pre>
               </div>
