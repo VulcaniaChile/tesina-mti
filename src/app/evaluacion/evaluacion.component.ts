@@ -124,6 +124,8 @@ export class EvaluacionComponent implements OnInit {
   mealSuggestions: MealSuggestion[] = [];
   showMealSuggestions = false;
   showIADistributionWizard = false;
+  iaHelpFlowStep: 1 | 2 = 1;
+  iaHelpBaseApplied = false;
   iaDistributionWizard = {
     mealsPerDay: 5,
     priority: 'equilibrado' as 'equilibrado' | 'proteina' | 'carbohidrato' | 'grasa',
@@ -395,6 +397,9 @@ export class EvaluacionComponent implements OnInit {
     }
 
     this.currentStep = 2;
+    if (this.isAIEnabled) {
+      this.abrirAsistenteDistribucionIA(true);
+    }
   }
 
   volverPaso1() {
@@ -714,7 +719,7 @@ export class EvaluacionComponent implements OnInit {
     this.distribuirMacrosConPesos();
   }
 
-  abrirAsistenteDistribucionIA() {
+  abrirAsistenteDistribucionIA(autoOpen = false) {
     if (!this.isAIEnabled) {
       return;
     }
@@ -725,9 +730,32 @@ export class EvaluacionComponent implements OnInit {
       alert('Primero calcula los macros diarios antes de usar el asistente IA.');
       return;
     }
-    this.registrarInteraccion();
-    this.registrarSugerenciaIA('wizardDistribucion');
+    if (!autoOpen) {
+      this.registrarInteraccion();
+    }
+    this.registrarSugerenciaIA('flujoAyudaIA');
+    this.iaHelpFlowStep = 1;
+    this.iaHelpBaseApplied = false;
     this.showIADistributionWizard = true;
+  }
+
+  aplicarDistribucionBaseIA() {
+    if (!this.isAIEnabled || !this.pautaNutricional.calorias) {
+      return;
+    }
+    this.registrarInteraccion();
+    this.distribuirMacrosConPesos();
+    this.registrarAceptacionIA('distribucionBaseIA');
+    this.iaHelpBaseApplied = true;
+    this.iaHelpFlowStep = 2;
+  }
+
+  avanzarPasoAsistenteIA() {
+    this.iaHelpFlowStep = 2;
+  }
+
+  volverPasoAsistenteIA() {
+    this.iaHelpFlowStep = 1;
   }
 
   cerrarAsistenteDistribucionIA() {
@@ -784,7 +812,7 @@ export class EvaluacionComponent implements OnInit {
   sugerirMenuReal() {
     this.registrarInteraccion();
     if (!this.planTienePorciones()) {
-      alert('Primero arma el plan de macros arrastrando porciones o usando "Sugerir pauta"');
+      alert('Primero arma el plan de macros arrastrando porciones o ejecutando la ayuda IA.');
       return;
     }
 

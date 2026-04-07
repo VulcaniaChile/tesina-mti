@@ -404,17 +404,9 @@
             <i class="fas fa-undo me-1"></i>
             Limpiar día
           </button>
-          <button class="btn btn-outline-primary btn-sm" *ngIf="isAIEnabled" (click)="sugerirPautaIA()">
-            <i class="fas fa-robot me-1"></i>
-            Sugerir pauta
-          </button>
-          <button class="btn btn-outline-info btn-sm" *ngIf="isAIEnabled" (click)="distribuirMacrosIA()" [disabled]="!pautaNutricional.calorias">
-            <i class="fas fa-sliders-h me-1"></i>
-            Distribuir macros IA
-          </button>
           <button class="btn btn-primary btn-sm" *ngIf="isAIEnabled" (click)="abrirAsistenteDistribucionIA()" [disabled]="!pautaNutricional.calorias">
             <i class="fas fa-magic me-1"></i>
-            Asistente IA
+            Re-ejecutar ayuda IA
           </button>
           <button class="btn btn-success btn-sm" (click)="sugerirMenuReal()" [disabled]="!planTienePorciones()">
             <i class="fas fa-utensils me-1"></i>
@@ -651,64 +643,72 @@
         <div class="modal-header bg-primary text-white">
           <h5 class="modal-title" id="iaDistributionWizardModalLabel">
             <i class="fas fa-magic me-2"></i>
-            Asistente IA de distribución
+            Flujo de ayuda IA · Paso {{ iaHelpFlowStep }} de 2
           </h5>
           <button type="button" class="btn-close btn-close-white" (click)="cerrarAsistenteDistribucionIA()" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="text-muted mb-3">Responde estas preguntas y aplicamos una distribución inicial de calorías/macros en un clic.</p>
-
-          <div class="wizard-grid">
-            <div class="wizard-question-card">
-              <label class="form-label fw-semibold">1) ¿Cuántas comidas quieres priorizar?</label>
-              <select class="form-select" [(ngModel)]="iaDistributionWizard.mealsPerDay">
-                <option [ngValue]="3">3 comidas principales</option>
-                <option [ngValue]="5">5 tiempos (con colaciones)</option>
-              </select>
+          <ng-container *ngIf="iaHelpFlowStep === 1; else wizardStepTwo">
+            <p class="text-muted mb-3">Primero aplicamos una distribución base de macros en un clic (equivalente a "Distribuir macros IA").</p>
+            <div class="alert alert-primary mb-2">
+              <i class="fas fa-bolt me-2"></i>
+              Se asignarán porciones automáticamente en desayuno, media mañana, almuerzo, colación y cena para arrancar con una pauta utilizable.
             </div>
-
-            <div class="wizard-question-card">
-              <label class="form-label fw-semibold">2) ¿Qué macro quieres enfatizar?</label>
-              <select class="form-select" [(ngModel)]="iaDistributionWizard.priority">
-                <option value="equilibrado">Equilibrado</option>
-                <option value="proteina">Proteína</option>
-                <option value="carbohidrato">Carbohidratos</option>
-                <option value="grasa">Grasas</option>
-              </select>
+            <div class="alert" [class]="iaHelpBaseApplied ? 'alert-success' : 'alert-light border'">
+              <i class="fas" [class.fa-check-circle]="iaHelpBaseApplied" [class.fa-circle-info]="!iaHelpBaseApplied"></i>
+              <span class="ms-2">{{ iaHelpBaseApplied ? 'Distribución base aplicada. Puedes continuar al ajuste guiado.' : 'Aún no se aplica la distribución base.' }}</span>
             </div>
+          </ng-container>
 
-            <div class="wizard-question-card">
-              <label class="form-label fw-semibold">3) ¿Cuándo prefieres concentrar carbohidratos?</label>
-              <select class="form-select" [(ngModel)]="iaDistributionWizard.carbTiming">
-                <option value="equilibrado">Distribución equilibrada</option>
-                <option value="temprano">Más temprano (desayuno/mañana)</option>
-                <option value="tarde">Más tarde (almuerzo/cena)</option>
-              </select>
-            </div>
+          <ng-template #wizardStepTwo>
+            <p class="text-muted mb-3">Ahora ajusta la distribución con preguntas guiadas (equivalente a "Asistente IA").</p>
 
-            <div class="wizard-question-card">
-              <label class="form-label fw-semibold d-block">4) Preferencias de cierre diario</label>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="lightDinnerCheck" [(ngModel)]="iaDistributionWizard.lightDinner">
-                <label class="form-check-label" for="lightDinnerCheck">
-                  Cena más liviana
-                </label>
+            <div class="wizard-grid">
+              <div class="wizard-question-card">
+                <label class="form-label fw-semibold">1) ¿Cuántas comidas quieres priorizar?</label>
+                <select class="form-select" [(ngModel)]="iaDistributionWizard.mealsPerDay">
+                  <option [ngValue]="3">3 comidas principales</option>
+                  <option [ngValue]="5">5 tiempos (con colaciones)</option>
+                </select>
               </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="includeSnacksCheck" [(ngModel)]="iaDistributionWizard.includeSnacks">
-                <label class="form-check-label" for="includeSnacksCheck">
-                  Incluir colaciones
-                </label>
+
+              <div class="wizard-question-card">
+                <label class="form-label fw-semibold">2) ¿Qué macro quieres enfatizar?</label>
+                <select class="form-select" [(ngModel)]="iaDistributionWizard.priority">
+                  <option value="equilibrado">Equilibrado</option>
+                  <option value="proteina">Proteína</option>
+                  <option value="carbohidrato">Carbohidratos</option>
+                  <option value="grasa">Grasas</option>
+                </select>
+              </div>
+
+              <div class="wizard-question-card">
+                <label class="form-label fw-semibold">3) ¿Cuándo prefieres concentrar carbohidratos?</label>
+                <select class="form-select" [(ngModel)]="iaDistributionWizard.carbTiming">
+                  <option value="equilibrado">Distribución equilibrada</option>
+                  <option value="temprano">Más temprano (desayuno/mañana)</option>
+                  <option value="tarde">Más tarde (almuerzo/cena)</option>
+                </select>
+              </div>
+
+              <div class="wizard-question-card">
+                <label class="form-label fw-semibold d-block">4) Preferencias de cierre diario</label>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="lightDinnerCheck" [(ngModel)]="iaDistributionWizard.lightDinner">
+                  <label class="form-check-label" for="lightDinnerCheck">
+                    Cena más liviana
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="includeSnacksCheck" [(ngModel)]="iaDistributionWizard.includeSnacks">
+                  <label class="form-check-label" for="includeSnacksCheck">
+                    Incluir colaciones
+                  </label>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="alert alert-primary mt-3 mb-0">
-            <i class="fas fa-bolt me-2"></i>
-            Esta acción crea una distribución inicial para acelerar el paso. Luego puedes afinar manualmente con sliders.
-          </div>
-
-          <div class="wizard-preview mt-3" *ngIf="getWizardPreviewRows() as previewRows">
+            <div class="wizard-preview mt-3" *ngIf="getWizardPreviewRows() as previewRows">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="mb-0">Vista previa de distribución IA</h6>
               <small class="text-muted">Total estimado: {{ getWizardPreviewCaloriesTotal() | number:'1.0-0' }} kcal</small>
@@ -758,14 +758,27 @@
                 </tbody>
               </table>
             </div>
-          </div>
+            </div>
+          </ng-template>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" (click)="cerrarAsistenteDistribucionIA()">Cancelar</button>
-          <button type="button" class="btn btn-primary" (click)="aplicarAsistenteDistribucionIA()">
-            <i class="fas fa-check me-1"></i>
-            Aplicar distribución IA
-          </button>
+          <ng-container *ngIf="iaHelpFlowStep === 1; else stepTwoActions">
+            <button type="button" class="btn btn-outline-primary" (click)="avanzarPasoAsistenteIA()">
+              Continuar sin distribución base
+            </button>
+            <button type="button" class="btn btn-primary" (click)="aplicarDistribucionBaseIA()">
+              <i class="fas fa-sliders-h me-1"></i>
+              Aplicar distribución base y continuar
+            </button>
+          </ng-container>
+          <ng-template #stepTwoActions>
+            <button type="button" class="btn btn-outline-secondary" (click)="volverPasoAsistenteIA()">Volver al paso 1</button>
+            <button type="button" class="btn btn-primary" (click)="aplicarAsistenteDistribucionIA()">
+              <i class="fas fa-check me-1"></i>
+              Aplicar ajuste guiado IA
+            </button>
+          </ng-template>
         </div>
       </div>
     </div>
