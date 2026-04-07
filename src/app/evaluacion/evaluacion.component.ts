@@ -367,10 +367,6 @@ export class EvaluacionComponent implements OnInit {
 
   continuarPaso2() {
     this.registrarInteraccion();
-    if (!this.pautaNutricional.calorias) {
-      alert('Calcula y valida los macros diarios antes de avanzar al subpaso de cierre de pauta.');
-      return;
-    }
     if (!this.validarPacienteCompleto()) {
       return;
     }
@@ -381,8 +377,17 @@ export class EvaluacionComponent implements OnInit {
       return;
     }
 
+    if (!this.pautaNutricional.calorias) {
+      this.calcularMacrosDiarios();
+      if (!this.pautaNutricional.calorias) {
+        return;
+      }
+    }
+
     if (this.pasoEnEjecucion && this.pasoEnEjecucion.modulo === 'evaluacion') {
-      this.completarPaso(this.pasoEnEjecucion);
+      if (!this.estaPasoCompletado(this.pasoEnEjecucion.id)) {
+        this.completarPaso(this.pasoEnEjecucion);
+      }
       const pacienteId = this.flujoAsignado?.pacienteId || this.pacienteSeleccionado?.id;
       if (pacienteId) {
         this.actualizarFlujoParaPaciente(pacienteId);
