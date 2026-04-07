@@ -29,6 +29,10 @@ Cada pareja comparte objetivo, visitas y entregables. La comparación se hace "b
   - **Sin IA**: campos obligatorios (recordatorio 24h, notas clínicas, decisiones manuales) y cálculo visible de fórmulas (TMB, calorías).
   - **Con IA**: acciones automatizadas (simular análisis, generar menú, proyectar resultados) y confirmaciones de aprobación del profesional.
 
+### Regla de captura manual (composición corporal)
+- Los campos **masa grasa estimada (kg)** y **masa magra estimada (kg)** se completan manualmente en ambos modos (`sin-ia` y `con-ia`).
+- Estos campos no se consideran autocompletado IA para métricas de eficiencia.
+
 ### Barra lateral controladora de escenarios
 - Ubicada a la derecha y fija en todas las pantallas del flujo. Sirve como "wizard" maestro.
 - Estados: `Seleccionar escenario` (lista de los cuatro escenarios), `Flujo en curso` (paso activo + instrucciones específicas de la visita), `Resultado final` (resumen y botón "Tomar otro escenario").
@@ -82,6 +86,7 @@ Cada pareja comparte objetivo, visitas y entregables. La comparación se hace "b
 
 ## 6. Simulación realista del modo IA
 - **Ahorro operativo tangible**: cada paso con IA debe ofrecer botones que ejecuten acciones complejas en un clic (auto-rellenar datos históricos, generar menú, predecir progreso). El log guarda que fue asistencia IA.
+- **Límite de alcance IA**: la composición corporal (masa grasa/magra) queda fuera del autocompletado IA y mantiene captura manual por criterio clínico.
 - **Comparador de esfuerzo**: almacenar `camposAutocompletados`, `camposManuales` y `horasEstimadas` para mostrar la diferencia de carga laboral.
 - **Validaciones explícitas**: tras una acción IA, solicitar confirmación del profesional para mantener trazabilidad.
 - **Repetición del mismo flujo**: permitir asignar al mismo paciente dos flujos idénticos en distintas fechas (manual vs IA) y etiquetar `flujoReferencia` para comparar resultados sobre base común.
