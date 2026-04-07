@@ -121,7 +121,7 @@
                        name="masaGrasa"
                        placeholder="Ej: 18"
                        step="0.1">
-                <small class="text-muted">Permite refinar la cantidad de proteínas si la masa magra es conocida.</small>
+                  <small class="text-muted">Ingreso manual en ambos modos (con IA y sin IA). Permite refinar la pauta cuando hay medición clínica.</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Masa magra estimada (kg)</label>
@@ -132,28 +132,7 @@
                        name="masaMagra"
                        placeholder="Ej: 50"
                        step="0.1">
-                <small class="text-muted">Se estimará si no se ingresa</small>
-              </div>
-
-              <div class="col-12" *ngIf="isAIEnabled && estimacionMasaMagra">
-                <div class="alert alert-primary d-flex flex-wrap align-items-center justify-content-between">
-                  <div>
-                    <h6 class="mb-1">
-                      <i class="fas fa-robot me-2"></i>
-                      Estimación IA de composición corporal
-                    </h6>
-                    <p class="mb-1 small">
-                      % de grasa estimado: <strong>{{ porcentajeGrasaEstimado }}%</strong>
-                      • Masa grasa: <strong>{{ estimacionMasaGrasa }} kg</strong>
-                      • Masa magra: <strong>{{ estimacionMasaMagra }} kg</strong>
-                    </p>
-                    <p class="mb-0 text-muted small">Puedes ajustar manualmente si tienes mediciones más precisas.</p>
-                  </div>
-                  <button class="btn btn-outline-light text-dark mt-2 mt-md-0" (click)="usarEstimacionIA()">
-                    <i class="fas fa-download me-1"></i>
-                    Usar esta estimación
-                  </button>
-                </div>
+                  <small class="text-muted">Ingreso manual en ambos modos (con IA y sin IA).</small>
               </div>
 
               <div class="col-md-6">
@@ -650,7 +629,7 @@
   </ng-container>
 
   <!-- Modal de sugerencias de menú real -->
-  <div class="modal fade" id="mealSuggestionsModal" tabindex="-1" aria-labelledby="mealSuggestionsModalLabel" aria-hidden="true" [class.show]="showMealSuggestions" [style.display]="showMealSuggestions ? 'block' : 'none'">
+  <div class="modal fade" *ngIf="currentStep === 2" id="mealSuggestionsModal" tabindex="-1" aria-labelledby="mealSuggestionsModalLabel" aria-hidden="true" [class.show]="showMealSuggestions" [style.display]="showMealSuggestions ? 'block' : 'none'">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
@@ -721,10 +700,10 @@
   </div>
 
   <!-- Backdrop del modal -->
-  <div class="modal-backdrop fade" [class.show]="showMealSuggestions" *ngIf="showMealSuggestions" (click)="closeMealSuggestions()"></div>
+  <div class="modal-backdrop fade" [class.show]="showMealSuggestions" *ngIf="currentStep === 2 && showMealSuggestions" (click)="closeMealSuggestions()"></div>
 
   <!-- Modal de asistente IA para distribución rápida -->
-  <div class="modal fade" id="iaDistributionWizardModal" tabindex="-1" aria-labelledby="iaDistributionWizardModalLabel" aria-hidden="true" [class.show]="showIADistributionWizard" [style.display]="showIADistributionWizard ? 'block' : 'none'">
+  <div class="modal fade" *ngIf="currentStep === 2" id="iaDistributionWizardModal" tabindex="-1" aria-labelledby="iaDistributionWizardModalLabel" aria-hidden="true" [class.show]="showIADistributionWizard" [style.display]="showIADistributionWizard ? 'block' : 'none'">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
@@ -850,5 +829,5 @@
     </div>
   </div>
 
-  <div class="modal-backdrop fade" [class.show]="showIADistributionWizard" *ngIf="showIADistributionWizard" (click)="cerrarAsistenteDistribucionIA()"></div>
+  <div class="modal-backdrop fade" [class.show]="showIADistributionWizard" *ngIf="currentStep === 2 && showIADistributionWizard" (click)="cerrarAsistenteDistribucionIA()"></div>
 </div>

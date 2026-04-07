@@ -225,6 +225,8 @@ export class EvaluacionComponent implements OnInit {
       grasas: 0,
       recomendaciones: ''
     };
+    this.showMealSuggestions = false;
+    this.showIADistributionWizard = false;
     this.resetMealPlan();
 
     this.calcularEstimacionComposicion(paciente.id);
@@ -392,6 +394,8 @@ export class EvaluacionComponent implements OnInit {
 
   volverPaso1() {
     this.currentStep = 1;
+    this.showMealSuggestions = false;
+    this.showIADistributionWizard = false;
   }
 
   getMealTotals(mealId: string) {
@@ -709,6 +713,9 @@ export class EvaluacionComponent implements OnInit {
     if (!this.isAIEnabled) {
       return;
     }
+    if (this.currentStep !== 2) {
+      return;
+    }
     if (!this.pautaNutricional.calorias) {
       alert('Primero calcula los macros diarios antes de usar el asistente IA.');
       return;
@@ -788,6 +795,9 @@ export class EvaluacionComponent implements OnInit {
   }
 
   toggleMealSuggestions() {
+    if (this.currentStep !== 2) {
+      return;
+    }
     this.showMealSuggestions = !this.showMealSuggestions;
   }
 
@@ -1496,34 +1506,6 @@ export class EvaluacionComponent implements OnInit {
     this.porcentajeGrasaEstimado = +(porcentaje * 100).toFixed(1);
     this.estimacionMasaGrasa = +(ultimo.peso * porcentaje).toFixed(1);
     this.estimacionMasaMagra = +(ultimo.peso - this.estimacionMasaGrasa).toFixed(1);
-
-    if (this.isAIEnabled) {
-      this.registrarSugerenciaIA('masaGrasa', 'masaMagra');
-      this.aplicarEstimacionIA();
-    }
-  }
-
-  usarEstimacionIA() {
-    this.aplicarEstimacionIA(true);
-  }
-
-  private aplicarEstimacionIA(forzar = false) {
-    if (!this.isAIEnabled || this.estimacionMasaGrasa === 0 || this.estimacionMasaMagra === 0) {
-      return;
-    }
-    const camposAceptados: string[] = [];
-    if (forzar || !this.paciente.masaGrasa) {
-      this.paciente.masaGrasa = this.estimacionMasaGrasa.toString();
-      camposAceptados.push('masaGrasa');
-    }
-    if (forzar || !this.paciente.masaMagra) {
-      this.paciente.masaMagra = this.estimacionMasaMagra.toString();
-      camposAceptados.push('masaMagra');
-    }
-    if (camposAceptados.length > 0) {
-      this.registrarAceptacionIA(...camposAceptados);
-      this.registrarInteraccion(forzar ? 1 : 0);
-    }
   }
 
   getEstadoPaso(paso: PasoFlujo): 'pendiente' | 'en-progreso' | 'completado' {
