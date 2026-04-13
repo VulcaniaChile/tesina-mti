@@ -1,5 +1,6 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ScenarioService, ScenarioDefinition, ScenarioId, ScenarioState, ScenarioRunSummary, ScenarioVisit } from '../../services/scenario.service';
 import { WorkflowService } from '../../services/workflow.service';
 import { filter, Subscription } from 'rxjs';
@@ -10,7 +11,7 @@ type VisitStatus = 'completed' | 'in-progress' | 'not-started';
 @Component({
   selector: 'app-scenario-wizard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './scenario-wizard.component.html',
   styleUrl: './scenario-wizard.component.scss'
 })
@@ -282,6 +283,10 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
   }
 
   resetAll() {
+    const confirmed = window.confirm(
+      '¿Seguro que deseas reiniciar todo? Se eliminarán todos los datos capturados del estudio (tiempos, clicks, facilidad).'
+    );
+    if (!confirmed) return;
     this.scenarioService.resetAllScenarios();
     this.closeCompletionModal();
   }
@@ -319,6 +324,37 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     }
     this.lastVisitRoute = route;
     this.router.navigate(['/', route]);
+  }
+
+  get scenarioGroups(): { label: string; scenarios: ScenarioDefinition[] }[] {
+    const all = this.scenarios;
+    const groupA = all.filter(s => s.id === 'A1' || s.id === 'A2');
+    const groupB = all.filter(s => s.id === 'B1' || s.id === 'B2');
+    return [
+      { label: `Par A — ${groupA[0]?.patientName ?? ''}`, scenarios: groupA },
+      { label: `Par B — ${groupB[0]?.patientName ?? ''}`, scenarios: groupB }
+    ];
+  }
+
+  get allScenariosCompleted(): boolean {
+    return this.scenarios.every(s => this.scenarioStates[s.id] === 'completed');
+  }
+
+  get hasSomeProgress(): boolean {
+    return Object.values(this.scenarioStates).some(s => s !== 'idle');
+  }
+
+  getTwinState(scenarioId: ScenarioId): { id: ScenarioId; title: string; state: string } | null {
+    const twin = this.getTwinScenarioId(scenarioId);
+    if (!twin) return null;
+    const scenario = this.scenarios.find(s => s.id === twin);
+    if (!scenario) return null;
+    const state = this.scenarioStates[twin];
+    return {
+      id: twin,
+      title: scenario.title,
+      state: state === 'completed' ? 'Completado' : state === 'in-progress' ? 'En curso' : 'Pendiente'
+    };
   }
 
   get hasSummaries(): boolean {
@@ -456,6 +492,17 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     }
 
     return this.completionSummary.facilidadPromedio - this.completionTwinSummary.facilidadPromedio;
+  }
+
+  get clicksDeltaVsTwin(): number | null {
+    if (!this.completionSummary || !this.completionTwinSummary) {
+      return null;
+    }
+    if (typeof this.completionSummary.interaccionesTotal !== 'number' || typeof this.completionTwinSummary.interaccionesTotal !== 'number') {
+      return null;
+    }
+    // positive = this scenario had fewer clicks (better)
+    return this.completionTwinSummary.interaccionesTotal - this.completionSummary.interaccionesTotal;
   }
 
   get hasTwinComparison(): boolean {

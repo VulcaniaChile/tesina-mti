@@ -33,8 +33,11 @@
       <div class="content-overlay" *ngIf="!scenarioActive">
         <div class="overlay-card">
           <h5>Inicia un escenario de prueba</h5>
-          <p>Elige uno de los flujos A1/A2/B1/B2 a la derecha para habilitar la edición de módulos.</p>
-          <small>Mientras tanto, todo el contenido permanece visible en modo lectura.</small>
+          <p *ngIf="firstPendingScenarioTitle">
+            Siguiente: <strong>{{ firstPendingScenarioTitle }}</strong>
+          </p>
+          <p *ngIf="!firstPendingScenarioTitle">Todos los escenarios están completados.</p>
+          <small>Elige un flujo en el panel derecho para habilitar la edición de módulos.</small>
         </div>
       </div>
       <div class="content-scroll">

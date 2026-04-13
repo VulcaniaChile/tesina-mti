@@ -3,7 +3,18 @@ import { CommonModule } from '@angular/common';
 import { DataService } from '../services/data.service';
 import { VersionService } from '../services/version.service';
 import { WorkflowService } from '../services/workflow.service';
+import { ScenarioService, ScenarioRunSummary } from '../services/scenario.service';
 import { Paciente, RegistroNutricional, FlujoAsignado } from '../models/nutricion.models';
+
+interface PairGroup {
+  id: string;
+  label: string;
+  s1id: string;
+  s2id: string;
+  s1: ScenarioRunSummary | null;
+  s2: ScenarioRunSummary | null;
+  delta: { tiempo: number; clicks: number; facilidad: number } | null;
+}
 
 @Component({
   selector: 'app-analisis',
@@ -17,6 +28,9 @@ export class AnalisisComponent implements OnInit {
   pacientes: Paciente[] = [];
   registros: RegistroNutricional[] = [];
   flujosAsignados: FlujoAsignado[] = [];
+  scenarioSummaries: ScenarioRunSummary[] = [];
+  pairGroups: PairGroup[] = [];
+
   estadisticas = {
     totalPacientes: 0,
     pacientesActivos: 0,
@@ -37,7 +51,8 @@ export class AnalisisComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private versionService: VersionService,
-    private workflowService: WorkflowService
+    private workflowService: WorkflowService,
+    private scenarioService: ScenarioService
   ) {}
 
   ngOnInit() {
@@ -59,6 +74,44 @@ export class AnalisisComponent implements OnInit {
       this.flujosAsignados = asignaciones;
       this.calcularMetricasFlujo();
     });
+
+    this.scenarioService.scenarioSummaries$.subscribe(records => {
+      this.scenarioSummaries = Object.values(records).filter((s): s is ScenarioRunSummary => !!s);
+      this.buildPairGroups();
+    });
+  }
+
+  get studyComplete(): boolean {
+    return this.pairGroups.every(g => g.s1 && g.s2);
+  }
+
+  get completedCount(): number {
+    return this.scenarioSummaries.length;
+  }
+
+  private buildPairGroups(): void {
+    const scenarios = this.scenarioService.getScenarios();
+    const getSummary = (id: string) => this.scenarioSummaries.find(s => s.scenarioId === id) ?? null;
+
+    const makePair = (s1id: string, s2id: string): PairGroup => {
+      const s1 = getSummary(s1id);
+      const s2 = getSummary(s2id);
+      const label = scenarios.find(s => s.id === s1id)?.patientName ?? s1id;
+      let delta: PairGroup['delta'] = null;
+      if (s1 && s2) {
+        delta = {
+          tiempo: (s1.tiempoTotalMin ?? 0) - (s2.tiempoTotalMin ?? 0),
+          clicks: (s1.interaccionesTotal ?? 0) - (s2.interaccionesTotal ?? 0),
+          facilidad: (s2.facilidadPromedio ?? 0) - (s1.facilidadPromedio ?? 0)
+        };
+      }
+      return { id: s1id.charAt(0), label, s1id, s2id, s1, s2, delta };
+    };
+
+    this.pairGroups = [
+      makePair('A1', 'A2'),
+      makePair('B1', 'B2')
+    ];
   }
 
   calcularEstadisticas() {
@@ -147,3 +200,4 @@ export class AnalisisComponent implements OnInit {
     };
   }
 }
+

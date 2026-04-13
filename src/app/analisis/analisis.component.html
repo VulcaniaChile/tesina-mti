@@ -234,12 +234,137 @@
   </div>
 
   <div class="row mt-4">
+    <div class="col-12">
+
+      <!-- ── A/B Study comparison ─────────────────────────────────────────── -->
+      <div class="alert alert-secondary d-flex align-items-center gap-2" *ngIf="completedCount === 0">
+        <i class="fas fa-info-circle"></i>
+        Completa al menos un flujo desde el asistente lateral para ver la comparativa A/B del estudio.
+      </div>
+
+      <div class="card ab-study-card" *ngIf="completedCount > 0">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-flask me-2 text-primary"></i>
+            Comparativa A/B del estudio
+          </h5>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success" *ngIf="studyComplete">
+              <i class="fas fa-check me-1"></i>Estudio completo
+            </span>
+            <span class="badge bg-warning text-dark" *ngIf="!studyComplete">
+              {{ completedCount }}/4 flujos completados
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <div class="ab-pair-group" *ngFor="let group of pairGroups">
+            <div class="ab-pair-label">
+              <span class="ab-pair-id">Par {{ group.id }}</span>
+              {{ group.label }}
+            </div>
+
+            <div class="ab-pair-grid">
+              <!-- Sin IA card -->
+              <div class="ab-scenario-card" [class.ab-scenario-card--complete]="!!group.s1">
+                <div class="ab-scenario-header">
+                  <span class="badge" [class.bg-success]="!!group.s1" [class.bg-secondary]="!group.s1">
+                    {{ group.s1 ? 'Completado' : 'Pendiente' }}
+                  </span>
+                  <span class="ab-mode-chip">Sin IA</span>
+                </div>
+                <p class="ab-scenario-id">{{ group.s1id }}</p>
+                <div class="ab-metric-grid" *ngIf="group.s1 as s">
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Tiempo</span>
+                    <strong>{{ s.tiempoTotalMin ? (s.tiempoTotalMin | number:'1.0-1') + ' min' : '–' }}</strong>
+                  </div>
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Clicks</span>
+                    <strong>{{ s.interaccionesTotal ?? '–' }}</strong>
+                  </div>
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Facilidad</span>
+                    <strong>{{ s.facilidadPromedio ? (s.facilidadPromedio | number:'1.0-1') + '/5' : '–' }}</strong>
+                  </div>
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Autocomp.</span>
+                    <strong>{{ s.camposAutocompletados ?? '–' }}</strong>
+                  </div>
+                </div>
+                <p class="text-muted small mt-2 mb-0" *ngIf="!group.s1">Sin datos aún</p>
+              </div>
+
+              <!-- Con IA card -->
+              <div class="ab-scenario-card ab-scenario-card--ia" [class.ab-scenario-card--complete]="!!group.s2">
+                <div class="ab-scenario-header">
+                  <span class="badge" [class.bg-success]="!!group.s2" [class.bg-secondary]="!group.s2">
+                    {{ group.s2 ? 'Completado' : 'Pendiente' }}
+                  </span>
+                  <span class="ab-mode-chip ab-mode-chip--ia">Con IA</span>
+                </div>
+                <p class="ab-scenario-id">{{ group.s2id }}</p>
+                <div class="ab-metric-grid" *ngIf="group.s2 as s">
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Tiempo</span>
+                    <strong>{{ s.tiempoTotalMin ? (s.tiempoTotalMin | number:'1.0-1') + ' min' : '–' }}</strong>
+                  </div>
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Clicks</span>
+                    <strong>{{ s.interaccionesTotal ?? '–' }}</strong>
+                  </div>
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Facilidad</span>
+                    <strong>{{ s.facilidadPromedio ? (s.facilidadPromedio | number:'1.0-1') + '/5' : '–' }}</strong>
+                  </div>
+                  <div class="ab-metric">
+                    <span class="ab-metric-label">Autocomp.</span>
+                    <strong>{{ s.camposAutocompletados ?? '–' }}</strong>
+                  </div>
+                </div>
+                <p class="text-muted small mt-2 mb-0" *ngIf="!group.s2">Sin datos aún</p>
+              </div>
+            </div>
+
+            <!-- Delta row -->
+            <div class="ab-delta-row" *ngIf="group.delta as d">
+              <span class="ab-delta-label">Δ Con IA vs Sin IA</span>
+              <span class="ab-delta-chip" [class.ab-delta-positive]="d.tiempo > 0" [class.ab-delta-negative]="d.tiempo < 0" [class.ab-delta-neutral]="d.tiempo === 0">
+                <i class="fas fa-clock me-1"></i>
+                {{ d.tiempo > 0 ? (d.tiempo | number:'1.0-1') + ' min más rápido' : d.tiempo < 0 ? (d.tiempo * -1 | number:'1.0-1') + ' min más lento' : 'igual tiempo' }}
+              </span>
+              <span class="ab-delta-chip" [class.ab-delta-positive]="d.clicks > 0" [class.ab-delta-negative]="d.clicks < 0" [class.ab-delta-neutral]="d.clicks === 0">
+                <i class="fas fa-mouse-pointer me-1"></i>
+                {{ d.clicks > 0 ? d.clicks + ' clicks menos' : d.clicks < 0 ? (d.clicks * -1) + ' clicks más' : 'igual clicks' }}
+              </span>
+              <span class="ab-delta-chip" [class.ab-delta-positive]="d.facilidad > 0" [class.ab-delta-negative]="d.facilidad < 0" [class.ab-delta-neutral]="d.facilidad === 0">
+                <i class="fas fa-star me-1"></i>
+                {{ d.facilidad > 0 ? '+' : '' }}{{ d.facilidad | number:'1.0-1' }} pts facilidad
+              </span>
+            </div>
+            <p class="text-muted small mb-0 mt-1" *ngIf="!group.delta">
+              Completa ambos flujos del par para ver la comparativa delta.
+            </p>
+
+          </div>
+
+          <small class="text-muted d-block mt-3">
+            Δ positivo indica que el modo Con IA es más eficiente o mejor valorado respecto a Sin IA en el mismo paciente.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow-level comparison table -->
+  <div class="row mt-4">
     <div class="col-lg-6">
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">
             <i class="fas fa-stopwatch me-2"></i>
-            Comparativa de flujos
+            Comparativa por modo (flujos del workflow)
           </h5>
         </div>
         <div class="card-body">
@@ -248,9 +373,10 @@
               <thead>
                 <tr>
                   <th>Modo</th>
-                  <th>Flujos completados</th>
-                  <th>Tiempo medio (min)</th>
-                  <th>Facilidad media (1-5)</th>
+                  <th>Flujos</th>
+                  <th>Tiempo (min)</th>
+                  <th>Facilidad</th>
+                  <th>Interacciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,32 +385,29 @@
                   <td>{{ metricasFlujo.sinIA.total }}</td>
                   <td>{{ metricasFlujo.sinIA.tiempoPromedio | number:'1.0-1' }}</td>
                   <td>{{ metricasFlujo.sinIA.facilidadPromedio | number:'1.0-1' }}</td>
+                  <td>{{ metricasFlujo.sinIA.interaccionesPromedio | number:'1.0-1' }}</td>
                 </tr>
                 <tr>
                   <td>Con IA</td>
                   <td>{{ metricasFlujo.conIA.total }}</td>
                   <td>{{ metricasFlujo.conIA.tiempoPromedio | number:'1.0-1' }}</td>
                   <td>{{ metricasFlujo.conIA.facilidadPromedio | number:'1.0-1' }}</td>
-                  <th>Interacciones medias</th>
-                  <th>Campos manuales medios</th>
+                  <td>{{ metricasFlujo.conIA.interaccionesPromedio | number:'1.0-1' }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <small class="text-muted">Datos basados en flujos completados y registrados mediante el panel guiado.</small>
+          <small class="text-muted">Datos basados en flujos completados y registrados.</small>
         </div>
       </div>
+    </div>
     <div class="col-lg-6">
-                  <td>{{ metricasFlujo.sinIA.interaccionesPromedio | number:'1.0-1' }}</td>
-                  <td>{{ metricasFlujo.sinIA.manualesPromedio | number:'1.0-1' }}</td>
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">
             <i class="fas fa-balance-scale me-2"></i>
             Impacto de la IA frente al flujo manual
           </h5>
-                  <td>{{ metricasFlujo.conIA.interaccionesPromedio | number:'1.0-1' }}</td>
-                  <td>{{ metricasFlujo.conIA.manualesPromedio | number:'1.0-1' }}</td>
         </div>
         <div class="card-body">
           <p class="mb-2">
@@ -312,17 +435,7 @@
             </span>
           </p>
           <div class="alert alert-info" *ngIf="flujosAsignados.length === 0">
-            Aún no hay flujos completados para comparar. Asigna un flujo desde Pacientes y regístralo en Evaluación/Seguimiento.
-          </div>
-          <div *ngIf="flujosAsignados.length > 0">
-            <h6>Últimos flujos registrados</h6>
-            <ul class="list-unstyled small mb-0">
-              <li *ngFor="let flujo of flujosAsignados | slice:0:4">
-                <i class="fas me-1" [ngClass]="flujo.modoEjecutado === 'con-ia' ? 'fa-robot text-primary' : 'fa-user text-secondary'"></i>
-                {{ getNombreFlujo(flujo.flujoId) }} • {{ flujo.estado | titlecase }} •
-                {{ flujo.resultado?.tiempoTotalMin ? (flujo.resultado?.tiempoTotalMin | number:'1.0-1') + ' min' : 'sin datos' }}
-              </li>
-            </ul>
+            Aún no hay flujos completados para comparar.
           </div>
         </div>
       </div>

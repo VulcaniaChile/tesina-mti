@@ -23,10 +23,39 @@
   </div>
 
   <ng-container *ngIf="!currentScenario; else scenarioInProgress">
-    <div class="scenario-grid">
+
+    <!-- Intro briefing: shown only before first scenario starts -->
+    <div class="intro-briefing" *ngIf="!hasSomeProgress">
+      <div class="intro-briefing-header">
+        <i class="fas fa-info-circle"></i>
+        <strong>Protocolo de validación A/B</strong>
+      </div>
+      <ol class="intro-steps">
+        <li>Inicia el flujo <strong>1.º (A1 – Sin IA)</strong> y completa las 4 fases</li>
+        <li>Continúa con <strong>2.º (A2 – Con IA)</strong> para el mismo paciente</li>
+        <li>Repite con el Par B: primero <strong>B1</strong>, luego <strong>B2</strong></li>
+        <li>Al finalizar los 4 flujos, revisa la comparativa en <strong>Análisis</strong></li>
+      </ol>
+      <p class="text-muted small mb-0">Cada flujo dura aproximadamente 15–30 min. Expande una tarjeta para ver su detalle.</p>
+    </div>
+
+    <!-- All completed CTA -->
+    <div class="all-complete-cta" *ngIf="allScenariosCompleted">
+      <i class="fas fa-check-circle"></i>
+      <div>
+        <strong>¡Estudio completado!</strong>
+        <p class="mb-0">Los 4 flujos han sido registrados.</p>
+      </div>
+      <a routerLink="/analisis" class="btn btn-primary btn-sm">Ver comparativa →</a>
+    </div>
+
+    <!-- Scenario groups A/B -->
+    <div class="scenario-pair-section" *ngFor="let group of scenarioGroups">
+      <div class="scenario-pair-label">{{ group.label }}</div>
+      <div class="scenario-grid">
       <div
         class="scenario-card"
-        *ngFor="let scenario of scenarios"
+        *ngFor="let scenario of group.scenarios"
         [class.disabled]="scenarioStates[scenario.id] === 'completed'"
         [class.scenario-card--expanded]="isScenarioExpanded(scenario.id)"
         [class.scenario-card--compact]="!isScenarioExpanded(scenario.id)"
@@ -102,11 +131,22 @@
               <small *ngIf="scenario.patientPreset.notas" class="text-muted d-block mt-1">Nota: {{ scenario.patientPreset.notas }}</small>
             </div>
 
+            <!-- Twin scenario status -->
+            <div class="scenario-twin-status" *ngIf="getTwinState(scenario.id) as twin">
+              <span class="twin-label">Gemelo: {{ twin.id }} — {{ twin.title }}</span>
+              <span class="twin-state-chip"
+                    [class.twin-state-done]="twin.state === 'Completado'"
+                    [class.twin-state-active]="twin.state === 'En curso'">
+                {{ twin.state }}
+              </span>
+            </div>
+
             <button class="btn btn-primary" (click)="startScenario(scenario.id); $event.stopPropagation()" [disabled]="scenarioStates[scenario.id] === 'completed'">
               Iniciar prueba
             </button>
           </ng-template>
         </ng-container>
+      </div>
       </div>
     </div>
 
@@ -313,6 +353,15 @@
                 </strong>
                 <small class="text-muted" *ngIf="facilidadDeltaVsTwin !== null">
                   {{ facilidadDeltaVsTwin > 0 ? 'Mayor facilidad que el gemelo' : facilidadDeltaVsTwin < 0 ? 'Menor facilidad que el gemelo' : 'Misma facilidad que el gemelo' }}
+                </small>
+              </div>
+              <div class="completion-kpi-card">
+                <span class="label">Delta clicks</span>
+                <strong [class.text-success]="clicksDeltaVsTwin !== null && clicksDeltaVsTwin > 0" [class.text-danger]="clicksDeltaVsTwin !== null && clicksDeltaVsTwin < 0">
+                  {{ clicksDeltaVsTwin === null ? 'Sin datos' : (clicksDeltaVsTwin > 0 ? '-' : '+') + (clicksDeltaVsTwin | number:'1.0-0') }}
+                </strong>
+                <small class="text-muted" *ngIf="clicksDeltaVsTwin !== null">
+                  {{ clicksDeltaVsTwin > 0 ? 'Menos clicks que el gemelo' : clicksDeltaVsTwin < 0 ? 'Más clicks que el gemelo' : 'Igual clicks que el gemelo' }}
                 </small>
               </div>
             </div>
