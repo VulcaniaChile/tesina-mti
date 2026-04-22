@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ScenarioWizardComponent } from './components/scenario-wizard/scenario-wizard.component';
-import { ScenarioService } from './services/scenario.service';
+import { ScenarioService, ScenarioDefinition } from './services/scenario.service';
 
 @Component({
   selector: 'app-root',
@@ -11,24 +11,35 @@ import { ScenarioService } from './services/scenario.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'sistema-nutricional';
   scenarioActive = false;
-  firstPendingScenarioTitle: string | null = null;
+  showStartModal = false;
+  nextScenario: ScenarioDefinition | null = null;
 
-  constructor(private scenarioService: ScenarioService) {}
+  constructor(private scenarioService: ScenarioService, private router: Router) {}
 
-  ngOnInit() {
-    this.scenarioService.scenarioStates$.subscribe(states => {
-      const scenarios = this.scenarioService.getScenarios();
-      const pending = scenarios.find(s => states[s.id] === 'idle' || states[s.id] === undefined);
-      this.firstPendingScenarioTitle = pending
-        ? `${pending.recommendedOrder}.º ${pending.title}`
-        : null;
-    });
+  onScenarioChange(active: boolean): void {
+    this.scenarioActive = active;
   }
 
-  onScenarioChange(active: boolean) {
-    this.scenarioActive = active;
+  onReadyForNext(): void {
+    this.nextScenario = this.scenarioService.getNextScenario();
+    if (this.nextScenario) {
+      this.showStartModal = true;
+    } else {
+      this.showStartModal = false;
+      this.router.navigate(['/analisis']);
+    }
+  }
+
+  startNext(): void {
+    if (!this.nextScenario) { return; }
+    this.scenarioService.startScenario(this.nextScenario.id);
+    this.showStartModal = false;
+  }
+
+  getEstimatedTime(scenario: ScenarioDefinition): number {
+    return scenario.visits.reduce((sum, v) => sum + v.targetMinutes, 0);
   }
 }

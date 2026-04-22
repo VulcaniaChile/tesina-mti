@@ -1,43 +1,20 @@
 <div class="wizard" *ngIf="!loading">
   <div class="wizard-state-strip">
-    <div class="state-chip" [class.active]="!currentScenario">
-      <span>Paso 1</span>
-      <strong>Seleccionar escenario</strong>
+    <div class="state-chip" [class.active]="!currentScenario && !allScenariosCompleted">
+      <span>Estado</span>
+      <strong>Sin flujo activo</strong>
     </div>
     <div class="state-chip" [class.active]="!!currentScenario && !!currentVisit">
-      <span>Paso 2</span>
-      <strong>Flujo en curso</strong>
+      <span>Estado</span>
+      <strong>Flujo activo</strong>
     </div>
-    <div class="state-chip" [class.active]="!currentVisit && !!currentScenario">
-      <span>Paso 3</span>
-      <strong>Resultado final</strong>
+    <div class="state-chip" [class.active]="allScenariosCompleted">
+      <span>Estado</span>
+      <strong>Completado</strong>
     </div>
-  </div>
-
-  <div class="wizard-header">
-    <div>
-      <h4>Escenarios de Prueba</h4>
-      <p>Selecciona un escenario y sigue las instrucciones para completar el flujo.</p>
-    </div>
-    <button class="btn btn-outline-secondary btn-sm" (click)="resetAll()">Reiniciar todo</button>
   </div>
 
   <ng-container *ngIf="!currentScenario; else scenarioInProgress">
-
-    <!-- Intro briefing: shown only before first scenario starts -->
-    <div class="intro-briefing" *ngIf="!hasSomeProgress">
-      <div class="intro-briefing-header">
-        <i class="fas fa-info-circle"></i>
-        <strong>Protocolo de validación A/B</strong>
-      </div>
-      <ol class="intro-steps">
-        <li>Inicia el flujo <strong>1.º (A1 – Sin IA)</strong> y completa las 4 fases</li>
-        <li>Continúa con <strong>2.º (A2 – Con IA)</strong> para el mismo paciente</li>
-        <li>Repite con el Par B: primero <strong>B1</strong>, luego <strong>B2</strong></li>
-        <li>Al finalizar los 4 flujos, revisa la comparativa en <strong>Análisis</strong></li>
-      </ol>
-      <p class="text-muted small mb-0">Cada flujo dura aproximadamente 15–30 min. Expande una tarjeta para ver su detalle.</p>
-    </div>
 
     <!-- All completed CTA -->
     <div class="all-complete-cta" *ngIf="allScenariosCompleted">
@@ -49,202 +26,128 @@
       <a routerLink="/analisis" class="btn btn-primary btn-sm">Ver comparativa →</a>
     </div>
 
-    <!-- Scenario groups A/B -->
-    <div class="scenario-pair-section" *ngFor="let group of scenarioGroups">
-      <div class="scenario-pair-label">{{ group.label }}</div>
-      <div class="scenario-grid">
-      <div
-        class="scenario-card"
-        *ngFor="let scenario of group.scenarios"
-        [class.disabled]="scenarioStates[scenario.id] === 'completed'"
-        [class.scenario-card--expanded]="isScenarioExpanded(scenario.id)"
-        [class.scenario-card--compact]="!isScenarioExpanded(scenario.id)"
-        (click)="selectScenarioCard(scenario.id)">
-        <div class="scenario-card-header">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
-            <div class="badge" [ngClass]="getStateClass(scenario.id)">
-              {{ scenarioStates[scenario.id] === 'completed' ? 'Completado' : 'Pendiente' }}
-            </div>
-            <span class="scenario-order-badge" *ngIf="scenarioStates[scenario.id] !== 'completed'">
-              {{ scenario.recommendedOrder }}.º
-            </span>
-          </div>
-          <h5>{{ scenario.title }}</h5>
-          <p>{{ scenario.patientName }} · {{ scenario.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}</p>
-        </div>
-
-        <ng-container *ngIf="!isScenarioExpanded(scenario.id)">
-          <p class="scenario-description scenario-description--compact">{{ scenario.description }}</p>
-          <div class="scenario-compact-meta">
-            {{ getScenarioCompactMeta(scenario) }}
-          </div>
-          <button class="btn btn-outline-primary btn-sm align-self-start" (click)="selectScenarioCard(scenario.id); $event.stopPropagation()">
-            Ver detalle
-          </button>
-        </ng-container>
-
-        <ng-container *ngIf="isScenarioExpanded(scenario.id)">
-          <ng-container *ngIf="scenarioStates[scenario.id] === 'completed' && getScenarioSummary(scenario.id) as summary; else pendingScenarioCard">
-            <div class="scenario-completed-summary">
-              <div class="scenario-completed-metrics">
-                <div>
-                  <span class="label">Tiempo promedio</span>
-                  <strong>{{ summary.tiempoPromedioMin ? (summary.tiempoPromedioMin | number:'1.0-1') + ' min' : '–' }}</strong>
-                </div>
-                <div>
-                  <span class="label">Clicks promedio</span>
-                  <strong>{{ summary.clicksPromedio ? (summary.clicksPromedio | number:'1.0-1') : '–' }}</strong>
-                </div>
-              </div>
-              <div class="scenario-completed-meta">
-                <small>Última ejecución: {{ summary.finishedAt | date:'dd/MM · HH:mm' }}</small>
-                <small>{{ summary.ejecucionesCompletadas }} ejecución(es) registrada(s)</small>
-              </div>
-            </div>
-            <button class="btn btn-outline-secondary" disabled>
-              Flujo completado
-            </button>
-          </ng-container>
-
-          <ng-template #pendingScenarioCard>
-            <p class="scenario-description">{{ scenario.description }}</p>
-
-            <div class="scenario-preset scenario-preset--grid">
-              <p class="preset-label">Resumen clínico</p>
-              <div class="scenario-data-grid">
-                <span>Edad: {{ scenario.patientPreset.edad }} años</span>
-                <span>Peso: {{ scenario.patientPreset.peso }} kg</span>
-                <span>Altura: {{ scenario.patientPreset.altura }} cm</span>
-                <span>Actividad: {{ scenario.patientPreset.actividad | titlecase }}</span>
-                <span>Objetivo: {{ scenario.patientPreset.objetivo | titlecase }}</span>
-                <span *ngIf="scenario.patientPreset.masaGrasa">Masa grasa/magra: {{ scenario.patientPreset.masaGrasa }} / {{ scenario.patientPreset.masaMagra }} kg</span>
-              </div>
-            </div>
-
-            <div class="scenario-preset scenario-instructions">
-              <p class="preset-label">Instrucciones clave del flujo</p>
-              <ol>
-                <li *ngFor="let instruction of getScenarioInstructionHighlights(scenario)">
-                  {{ instruction }}
-                </li>
-              </ol>
-              <small *ngIf="scenario.patientPreset.notas" class="text-muted d-block mt-1">Nota: {{ scenario.patientPreset.notas }}</small>
-            </div>
-
-            <!-- Twin scenario status -->
-            <div class="scenario-twin-status" *ngIf="getTwinState(scenario.id) as twin">
-              <span class="twin-label">Gemelo: {{ twin.id }} — {{ twin.title }}</span>
-              <span class="twin-state-chip"
-                    [class.twin-state-done]="twin.state === 'Completado'"
-                    [class.twin-state-active]="twin.state === 'En curso'">
-                {{ twin.state }}
-              </span>
-            </div>
-
-            <button class="btn btn-primary" (click)="startScenario(scenario.id); $event.stopPropagation()" [disabled]="scenarioStates[scenario.id] === 'completed'">
-              Iniciar prueba
-            </button>
-          </ng-template>
-        </ng-container>
+    <!-- Session stepper -->
+    <div class="session-stepper">
+      <div class="session-progress-header">
+        <span class="session-label">Sesión de validación A/B</span>
+        <span class="session-badge">{{ completedCount }}/4</span>
       </div>
-      </div>
-    </div>
-
-    <div class="scenario-results" *ngIf="hasSummaries">
-      <div class="results-header">
-        <div>
-          <h5>Resultados recientes</h5>
-          <p class="text-muted mb-0">Métricas capturadas automáticamente tras completar cada escenario.</p>
-        </div>
-        <small class="text-muted">Los datos se reinician al limpiar el asistente.</small>
-      </div>
-      <div class="results-grid">
-        <div class="result-card" *ngFor="let summary of summaries">
-          <div class="result-card-header">
-            <span class="result-mode" [class.mode-ai]="summary.mode === 'con-ia'">
-              {{ summary.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}
-            </span>
-            <small class="text-muted">{{ summary.finishedAt | date:'dd/MM · HH:mm' }}</small>
+      <div class="stepper-list">
+        <div class="stepper-item"
+             *ngFor="let scenario of scenarios"
+             [class.stepper-item--completed]="scenarioStates[scenario.id] === 'completed'"
+             [class.stepper-item--next]="isNextScenario(scenario.id)"
+             [class.stepper-item--pending]="scenarioStates[scenario.id] === 'idle' && !isNextScenario(scenario.id)">
+          <div class="stepper-dot">
+            <i *ngIf="scenarioStates[scenario.id] === 'completed'" class="fas fa-check"></i>
+            <span *ngIf="scenarioStates[scenario.id] !== 'completed'">{{ scenario.recommendedOrder }}</span>
           </div>
-          <h6>{{ summary.scenarioTitle }}</h6>
-          <p class="result-patient">{{ summary.patientName }}</p>
-          <div class="result-metrics">
-            <div>
-              <span class="label">Tiempo promedio</span>
-              <strong>{{ summary.tiempoPromedioMin ? (summary.tiempoPromedioMin | number:'1.0-1') + ' min' : '–' }}</strong>
+          <div class="stepper-body">
+            <div class="stepper-title-row">
+              <p class="stepper-title">{{ scenario.title }}</p>
+              <span class="stepper-chip stepper-chip--done" *ngIf="scenarioStates[scenario.id] === 'completed'">Hecho</span>
+              <span class="stepper-chip stepper-chip--next" *ngIf="isNextScenario(scenario.id)">Próximo</span>
+              <span class="stepper-chip stepper-chip--pending" *ngIf="scenarioStates[scenario.id] === 'idle' && !isNextScenario(scenario.id)">Pendiente</span>
             </div>
-            <div>
-              <span class="label">Clicks promedio</span>
-              <strong>{{ summary.clicksPromedio ? (summary.clicksPromedio | number:'1.0-1') : '–' }}</strong>
+            <p class="stepper-meta">{{ scenario.patientName }} · {{ scenario.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}</p>
+            <div *ngIf="getScenarioSummary(scenario.id) as summary" class="stepper-kpis">
+              <span>{{ summary.tiempoTotalMin ? (summary.tiempoTotalMin | number:'1.0-0') + ' min' : '–' }}</span>
+              <span>{{ summary.interaccionesTotal ?? 0 }} clics</span>
+              <span *ngIf="summary.facilidadPromedio">★ {{ summary.facilidadPromedio | number:'1.0-1' }}</span>
             </div>
-            <div>
-              <span class="label">Clicks último flujo</span>
-              <strong>{{ summary.interaccionesTotal ?? 0 }}</strong>
-            </div>
-          </div>
-          <div class="result-meta-line">
-            <small>{{ summary.ejecucionesCompletadas }} ejecución(es)</small>
-            <small>{{ summary.stepsCompleted }} / {{ summary.totalSteps }} pasos</small>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Protocol briefing for fresh start -->
+    <div class="intro-briefing" *ngIf="!hasSomeProgress">
+      <div class="intro-briefing-header">
+        <i class="fas fa-info-circle"></i>
+        <strong>Protocolo de validación A/B</strong>
+      </div>
+      <ol class="intro-steps">
+        <li>Inicia el flujo <strong>1.º (A1 – Sin IA)</strong> y completa las 4 fases</li>
+        <li>Continúa con <strong>2.º (A2 – Con IA)</strong> para el mismo paciente</li>
+        <li>Repite con el Par B: primero <strong>B1</strong>, luego <strong>B2</strong></li>
+        <li>Al finalizar, revisa la comparativa en <strong>Análisis</strong></li>
+      </ol>
+      <p class="text-muted small mb-0">Cada flujo dura aproximadamente 15–30 min.</p>
+    </div>
+
+    <!-- Reset button -->
+    <button class="btn btn-outline-danger btn-sm w-100" (click)="resetAll()" *ngIf="hasSomeProgress && !allScenariosCompleted">
+      <i class="fas fa-redo me-1"></i>Reiniciar sesión
+    </button>
+
   </ng-container>
 
   <ng-template #scenarioInProgress>
     <div class="current-scenario">
+
+      <!-- Header -->
       <div class="current-header">
         <div>
-          <p class="label">Flujo en curso</p>
+          <p class="label">
+            Escenario {{ currentScenario?.recommendedOrder }}/4
+            <span class="mode-chip" [class.mode-chip--ia]="currentScenario?.mode === 'con-ia'">
+              {{ currentScenario?.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}
+            </span>
+          </p>
           <h5>{{ currentScenario?.title }}</h5>
-          <span class="patient">{{ currentScenario?.patientName }} · {{ currentScenario?.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}</span>
-        </div>
-        <button class="btn btn-link" (click)="resetScenario(currentScenario!.id)">Cancelar flujo</button>
-      </div>
-
-      <div class="current-phase-banner">
-        <div>
-          <p class="phase-caption">Fase actual</p>
-          <strong>{{ getCurrentPhaseTitle() }}</strong>
-        </div>
-        <div class="phase-right-block">
-          <div class="time-chip" *ngIf="elapsedScenarioTime">
-            <span>Tiempo</span>
-            <strong>{{ elapsedScenarioTime }}</strong>
-          </div>
-          <div class="time-chip click-chip">
-            <span>Clicks</span>
-            <strong>{{ liveClickCount }}</strong>
-          </div>
-          <span class="visit-status" [class]="'visit-status ' + getCurrentPhaseStatusClass()">
-            {{ getCurrentPhaseStatusLabel() }}
+          <span class="patient-chip">
+            <i class="fas fa-user-circle me-1"></i>{{ currentScenario?.patientName }}
           </span>
         </div>
+        <button class="btn btn-link btn-sm text-danger p-0 align-self-start" (click)="resetScenario(currentScenario!.id)">Cancelar</button>
       </div>
 
-      <div class="preset-banner" *ngIf="currentScenario?.patientPreset">
-        <p class="mb-1">Cargar antes de iniciar:</p>
-        <div class="preset-grid">
-          <span>Edad {{ currentScenario?.patientPreset.edad }} años</span>
-          <span>Peso {{ currentScenario?.patientPreset.peso }} kg</span>
-          <span>Altura {{ currentScenario?.patientPreset.altura }} cm</span>
-          <span>Actividad {{ currentScenario?.patientPreset.actividad | titlecase }}</span>
-          <span>Objetivo {{ currentScenario?.patientPreset.objetivo | titlecase }}</span>
-          <span *ngIf="currentScenario?.patientPreset.masaGrasa">Masa grasa {{ currentScenario?.patientPreset.masaGrasa }} kg</span>
-          <span *ngIf="currentScenario?.patientPreset.masaMagra">Masa magra {{ currentScenario?.patientPreset.masaMagra }} kg</span>
+      <!-- Live metrics -->
+      <div class="live-metrics">
+        <div class="metric-pill">
+          <span class="metric-label">Tiempo</span>
+          <strong>{{ elapsedScenarioTime || '00:00' }}</strong>
         </div>
-        <small *ngIf="currentScenario?.patientPreset.notas" class="text-muted">{{ currentScenario?.patientPreset.notas }}</small>
+        <div class="metric-pill metric-pill--green">
+          <span class="metric-label">Clics</span>
+          <strong>{{ liveClickCount }}</strong>
+        </div>
+        <div class="metric-pill metric-pill--purple">
+          <span class="metric-label">Visita</span>
+          <strong>{{ completedVisits.length + 1 }}/{{ currentScenario?.visits?.length }}</strong>
+        </div>
       </div>
 
+      <!-- Go to module button — prominent -->
+      <button class="btn btn-primary w-100 go-to-module-btn" (click)="goToCurrentModule()" *ngIf="currentVisit">
+        <i class="fas fa-arrow-right me-2"></i>
+        Ir a {{ currentVisit.route | titlecase }}
+      </button>
+
+      <!-- Current phase card -->
+      <div class="current-phase-card" *ngIf="currentVisit">
+        <p class="phase-eyebrow">Fase actual</p>
+        <strong class="phase-title">{{ getCurrentPhaseTitle() }}</strong>
+        <p class="phase-hint">{{ getVisitActionHint(currentVisit.id) }}</p>
+      </div>
+
+      <!-- Visit progress list -->
       <div class="visit-progress">
-        <div class="visit" *ngFor="let visit of currentScenario?.visits" [class.active]="isVisitActive(visit)" [class.completed]="getVisitStatus(visit) === 'completed'" [class.pending]="getVisitStatus(visit) === 'not-started'">
+        <div class="visit"
+             *ngFor="let visit of currentScenario?.visits"
+             [class.active]="isVisitActive(visit)"
+             [class.completed]="getVisitStatus(visit) === 'completed'"
+             [class.pending]="getVisitStatus(visit) === 'not-started'">
           <div class="visit-step">
             <i [class]="getVisitStatusIcon(visit)" aria-hidden="true"></i>
           </div>
           <div class="visit-info">
             <div class="visit-title-row">
               <p class="visit-title">{{ visit.title }}</p>
-              <span class="visit-status" [class.status-completed]="getVisitStatus(visit) === 'completed'" [class.status-in-progress]="getVisitStatus(visit) === 'in-progress'" [class.status-not-started]="getVisitStatus(visit) === 'not-started'">
+              <span class="visit-status"
+                    [class.status-completed]="getVisitStatus(visit) === 'completed'"
+                    [class.status-in-progress]="getVisitStatus(visit) === 'in-progress'"
+                    [class.status-not-started]="getVisitStatus(visit) === 'not-started'">
                 {{ getVisitStatusLabel(visit) }}
               </span>
             </div>
@@ -256,29 +159,37 @@
         </div>
       </div>
 
-      <button class="btn btn-primary btn-sm w-100 go-to-module-btn" (click)="goToCurrentModule()" *ngIf="currentVisit">
-        <i class="fas fa-arrow-right me-1"></i>
-        Ir a {{ currentVisit.route | titlecase }}
-      </button>
-
-      <div class="visit-details" *ngIf="currentVisit">
-        <div class="primary-action-hint">
-          <p class="hint-label">Acción principal de esta etapa</p>
-          <strong>{{ getVisitActionHint(currentVisit.id) }}</strong>
+      <!-- Patient preset data -->
+      <div class="preset-banner" *ngIf="currentScenario?.patientPreset">
+        <p class="preset-banner-label">Datos del paciente</p>
+        <div class="preset-grid">
+          <span>Edad {{ currentScenario?.patientPreset.edad }} años</span>
+          <span>Peso {{ currentScenario?.patientPreset.peso }} kg</span>
+          <span>Altura {{ currentScenario?.patientPreset.altura }} cm</span>
+          <span>Actividad {{ currentScenario?.patientPreset.actividad | titlecase }}</span>
+          <span>Objetivo {{ currentScenario?.patientPreset.objetivo | titlecase }}</span>
+          <span *ngIf="currentScenario?.patientPreset.masaGrasa">M. grasa {{ currentScenario?.patientPreset.masaGrasa }} kg</span>
+          <span *ngIf="currentScenario?.patientPreset.masaMagra">M. magra {{ currentScenario?.patientPreset.masaMagra }} kg</span>
         </div>
-        <h6>Instrucciones actuales</h6>
+        <small *ngIf="currentScenario?.patientPreset.notas" class="text-muted d-block mt-1">{{ currentScenario?.patientPreset.notas }}</small>
+      </div>
+
+      <!-- Instructions -->
+      <div class="visit-details" *ngIf="currentVisit">
+        <h6>Instrucciones de la fase</h6>
         <ul>
           <li *ngFor="let instruction of currentVisit.instructions">{{ instruction }}</li>
         </ul>
         <p class="text-muted small mb-0">
-          Completa las acciones en el módulo indicado para avanzar automáticamente al siguiente paso.
+          Completa las acciones en el módulo indicado para avanzar automáticamente.
         </p>
       </div>
 
       <div class="summary" *ngIf="!currentVisit">
         <h6>Flujo completado</h6>
-        <p>Revisa los resultados en el panel principal y elige otro escenario para continuar.</p>
+        <p>Revisa los resultados y espera el resumen de la sesión.</p>
       </div>
+
     </div>
   </ng-template>
 
@@ -401,9 +312,6 @@
             <span>Muy difícil</span>
             <span>Muy fácil</span>
           </div>
-          <textarea class="form-control mt-3" rows="2" placeholder="Comentario opcional..."
-                    [value]="facilityComment"
-                    (input)="facilityComment = $any($event.target).value"></textarea>
         </div>
         <div class="modal-footer">
           <button class="btn btn-link text-muted" (click)="skipFacilityRating()">Omitir</button>

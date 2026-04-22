@@ -124,6 +124,13 @@
 	color: #9a3412;
 }
 
+.overlay-lock-icon {
+	font-size: 2rem;
+	color: #94a3b8;
+	margin-bottom: 0.75rem;
+	display: block;
+}
+
 footer {
 	box-shadow: inset 0 1px 0 #0b0d14;
 }
@@ -148,4 +155,130 @@ footer {
 	.content-scroll {
 		padding-right: 0;
 	}
+}
+
+// ── Start scenario modal ────────────────────────────────────────────────────
+
+.start-modal-content {
+	border: none;
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 20px 60px rgba(15, 23, 42, 0.22);
+}
+
+.start-modal-header {
+	background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+	padding: 1.5rem 1.75rem 1.25rem;
+	color: #fff;
+}
+
+.start-modal-top-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.scenario-order-pill {
+	background: rgba(255, 255, 255, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	color: #fff;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	padding: 0.2rem 0.65rem;
+	text-transform: uppercase;
+}
+
+.start-mode-pill {
+	background: rgba(255, 255, 255, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	color: #fff;
+	border-radius: 999px;
+	font-size: 0.7rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	padding: 0.2rem 0.6rem;
+	text-transform: uppercase;
+}
+
+.start-mode-pill--ia {
+	background: rgba(16, 185, 129, 0.25);
+	border-color: rgba(16, 185, 129, 0.5);
+}
+
+.start-modal-title {
+	margin: 0 0 0.35rem;
+	font-size: 1.45rem;
+	font-weight: 700;
+	color: #fff;
+	line-height: 1.2;
+}
+
+.start-modal-patient {
+	margin: 0;
+	font-size: 0.9rem;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.start-modal-body {
+	padding: 1.25rem 1.75rem 0.5rem;
+}
+
+.start-info-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.info-block {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 0.65rem 0.85rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.info-block-label {
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #64748b;
+}
+
+.info-block strong {
+	font-size: 1rem;
+	color: #0f172a;
+}
+
+.start-modal-desc {
+	font-size: 0.88rem;
+	color: #475569;
+	margin-bottom: 0.85rem;
+}
+
+.start-modal-lock-notice {
+	font-size: 0.78rem;
+	color: #92400e;
+	background: #fffbeb;
+	border: 1px solid #fcd34d;
+	border-radius: 8px;
+	padding: 0.55rem 0.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.start-modal-footer {
+	padding: 1rem 1.75rem 1.5rem;
+}
+
+.start-btn {
+	border-radius: 10px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	padding: 0.75rem 1rem;
+	font-size: 1rem;
 }
