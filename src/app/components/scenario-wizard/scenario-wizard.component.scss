@@ -852,3 +852,291 @@
     color: #713f12;
   }
 }
+
+// ─── Session stepper (idle state) ────────────────────────────────────────────
+
+.session-stepper {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.session-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.session-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.session-badge {
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.65rem;
+}
+
+.stepper-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stepper-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+.stepper-item--next {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 8px;
+  margin-bottom: 0.35rem;
+  border-bottom: none !important;
+
+  .stepper-dot {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+  }
+}
+
+.stepper-item--completed {
+  opacity: 0.72;
+}
+
+.stepper-item--pending {
+  opacity: 0.55;
+}
+
+.stepper-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+
+  .stepper-item--completed & {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #16a34a;
+  }
+
+  i { font-size: 0.7rem; }
+}
+
+.stepper-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stepper-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.05rem;
+}
+
+.stepper-title {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #0f172a;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepper-meta {
+  margin: 0;
+  font-size: 0.73rem;
+  color: #64748b;
+}
+
+.stepper-kpis {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+
+  span {
+    font-size: 0.7rem;
+    color: #15803d;
+    background: #dcfce7;
+    border-radius: 4px;
+    padding: 0.05rem 0.4rem;
+    font-weight: 600;
+  }
+}
+
+.stepper-chip {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stepper-chip--done {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.stepper-chip--next {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.stepper-chip--pending {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+// ─── Active state: improved metrics + phase card ──────────────────────────────
+
+.live-metrics {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.metric-pill {
+  flex: 1;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.5rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  .metric-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+  }
+
+  strong {
+    font-size: 0.95rem;
+    color: #1e3a8a;
+    line-height: 1.1;
+  }
+}
+
+.metric-pill--green {
+  background: #f0fdf4;
+  border-color: #86efac;
+
+  strong { color: #14532d; }
+}
+
+.metric-pill--purple {
+  background: #faf5ff;
+  border-color: #c4b5fd;
+
+  strong { color: #4c1d95; }
+}
+
+.current-phase-card {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+
+  .phase-eyebrow {
+    margin: 0;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #4b5563;
+  }
+
+  .phase-title {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+    margin-top: 0.1rem;
+    margin-bottom: 0;
+  }
+
+  .phase-hint {
+    font-size: 0.82rem;
+    color: #374151;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    line-height: 1.45;
+  }
+}
+
+.mode-chip {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 0.07rem 0.42rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+
+  &.mode-chip--ia {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+}
+
+.patient-chip {
+  font-size: 0.82rem;
+  color: #475569;
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.preset-banner-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.65rem;
+  color: #6b7280;
+  margin-bottom: 0.4rem;
+  margin-top: 0;
+  font-weight: 700;
+}
+

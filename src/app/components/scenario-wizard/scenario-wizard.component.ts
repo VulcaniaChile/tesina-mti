@@ -49,6 +49,7 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
   private timerHandle: ReturnType<typeof setInterval> | null = null;
 
   @Output() scenarioChange = new EventEmitter<boolean>();
+  @Output() readyForNext = new EventEmitter<void>();
 
   private subscriptions: Subscription[] = [];
 
@@ -70,8 +71,14 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
       }),
       this.scenarioService.activeProgress$.subscribe(progress => {
         if (!progress) {
-          // Detect last-visit completion before clearing state
-          if (this.lastKnownScenario && this.prevCompletedVisits.length < this.lastKnownScenario.visits.length) {
+          // Detect last-visit completion before clearing state.
+          // Only push to facilityQueue if the scenario actually finished (not cancelled).
+          if (
+            this.lastKnownScenario &&
+            this.lastActiveScenarioId &&
+            this.scenarioStates[this.lastActiveScenarioId] === 'completed' &&
+            this.prevCompletedVisits.length < this.lastKnownScenario.visits.length
+          ) {
             const lastVisit = this.lastKnownScenario.visits[this.lastKnownScenario.visits.length - 1];
             const pasoId = lastVisit?.completionPasoIds?.[0] ?? lastVisit.id;
             this.facilityQueue.push({ id: lastVisit.id, title: lastVisit.title, pasoId });
@@ -94,6 +101,12 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
             } else if (!this.showFacilityModal) {
               this.showNextFacilityModal();
             }
+          } else if (!this.lastKnownScenario) {
+            // Initial load / page refresh with no in-session scenario
+            setTimeout(() => this.readyForNext.emit(), 0);
+          } else if (this.lastActiveScenarioId) {
+            // Scenario was cancelled (not completed)
+            setTimeout(() => this.readyForNext.emit(), 0);
           }
 
           this.lastActiveScenarioId = null;
@@ -361,6 +374,16 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     return this.summaries.length > 0;
   }
 
+  get completedCount(): number {
+    return this.scenarios.filter(s => this.scenarioStates[s.id] === 'completed').length;
+  }
+
+  isNextScenario(id: ScenarioId): boolean {
+    const sorted = [...this.scenarios].sort((a, b) => a.recommendedOrder - b.recommendedOrder);
+    const next = sorted.find(s => this.scenarioStates[s.id] === 'idle');
+    return next?.id === id;
+  }
+
   get liveClickCount(): number {
     void this.nowTick; // access nowTick so change detection re-evaluates this getter each tick
     return this.scenarioService.getActiveClickCount();
@@ -460,6 +483,7 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     this.showCompletionModal = false;
     this.completionSummary = null;
     this.completionTwinSummary = null;
+    this.readyForNext.emit();
     this.router.navigate(['/']);
   }
 

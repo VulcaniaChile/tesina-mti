@@ -32,12 +32,9 @@
     <div class="content-wrapper">
       <div class="content-overlay" *ngIf="!scenarioActive">
         <div class="overlay-card">
-          <h5>Inicia un escenario de prueba</h5>
-          <p *ngIf="firstPendingScenarioTitle">
-            Siguiente: <strong>{{ firstPendingScenarioTitle }}</strong>
-          </p>
-          <p *ngIf="!firstPendingScenarioTitle">Todos los escenarios están completados.</p>
-          <small>Elige un flujo en el panel derecho para habilitar la edición de módulos.</small>
+          <i class="fas fa-lock overlay-lock-icon"></i>
+          <h5>Inicia el siguiente escenario</h5>
+          <p class="text-muted mb-0">El asistente del panel derecho mostrará automáticamente el próximo flujo a ejecutar.</p>
         </div>
       </div>
       <div class="content-scroll">
@@ -52,10 +49,13 @@
       <div>
         <p class="role-eyebrow">Orquestación experimental</p>
         <h2>Control de escenario</h2>
-        <small>Define el contexto de prueba, guía el paso activo y captura métricas comparables.</small>
+        <small>Sigue el flujo activo y captura métricas comparables.</small>
       </div>
     </header>
-    <app-scenario-wizard (scenarioChange)="onScenarioChange($event)"></app-scenario-wizard>
+    <app-scenario-wizard
+      (scenarioChange)="onScenarioChange($event)"
+      (readyForNext)="onReadyForNext()">
+    </app-scenario-wizard>
   </aside>
 </div>
 <footer class="bg-dark text-white text-center py-3 mt-0">
@@ -63,3 +63,56 @@
     <small>&copy; 2025 Sistema Nutricional. Todos los derechos reservados.</small>
   </div>
 </footer>
+
+<!-- ── Start next scenario modal (non-dismissible) ──────────────────────── -->
+<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="startScenarioModalLabel"
+     [class.show]="showStartModal" [style.display]="showStartModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content start-modal-content" *ngIf="nextScenario">
+      <div class="start-modal-header">
+        <div class="start-modal-top-row">
+          <span class="scenario-order-pill">Escenario {{ nextScenario.recommendedOrder }} de 4</span>
+          <span class="start-mode-pill" [class.start-mode-pill--ia]="nextScenario.mode === 'con-ia'">
+            {{ nextScenario.mode === 'con-ia' ? 'Con IA' : 'Sin IA' }}
+          </span>
+        </div>
+        <h4 class="start-modal-title">{{ nextScenario.title }}</h4>
+        <p class="start-modal-patient">
+          <i class="fas fa-user me-1"></i>{{ nextScenario.patientName }}
+        </p>
+      </div>
+      <div class="modal-body start-modal-body">
+        <div class="start-info-grid">
+          <div class="info-block">
+            <span class="info-block-label">Duración estimada</span>
+            <strong>{{ getEstimatedTime(nextScenario) }} min</strong>
+          </div>
+          <div class="info-block">
+            <span class="info-block-label">Fases</span>
+            <strong>{{ nextScenario.visits.length }}</strong>
+          </div>
+          <div class="info-block">
+            <span class="info-block-label">Tiempos de comida</span>
+            <strong>{{ nextScenario.requiredMealTimes }}</strong>
+          </div>
+          <div class="info-block">
+            <span class="info-block-label">Modo</span>
+            <strong>{{ nextScenario.mode === 'con-ia' ? 'Asistido por IA' : 'Manual' }}</strong>
+          </div>
+        </div>
+        <p class="start-modal-desc">{{ nextScenario.description }}</p>
+        <div class="start-modal-lock-notice">
+          <i class="fas fa-lock me-1"></i>
+          El orden de ejecución es fijo. Debes completar este escenario antes de continuar.
+        </div>
+      </div>
+      <div class="start-modal-footer">
+        <button class="btn btn-primary btn-lg w-100 start-btn" (click)="startNext()">
+          <i class="fas fa-play me-2"></i>Comenzar escenario
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showStartModal" *ngIf="showStartModal"></div>
+

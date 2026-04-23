@@ -203,6 +203,16 @@ export class ScenarioService {
     return this.scenarios;
   }
 
+  getNextScenario(): ScenarioDefinition | null {
+    const states = this.scenarioStatesSubject.value;
+    return (
+      this.scenarios
+        .slice()
+        .sort((a, b) => a.recommendedOrder - b.recommendedOrder)
+        .find(s => states[s.id] === 'idle') ?? null
+    );
+  }
+
   getActiveClickCount(): number {
     return this.activeScenarioClickCount;
   }
