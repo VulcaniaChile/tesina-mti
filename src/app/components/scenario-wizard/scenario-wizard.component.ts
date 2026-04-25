@@ -1,5 +1,6 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ScenarioService, ScenarioDefinition, ScenarioId, ScenarioState, ScenarioRunSummary, ScenarioVisit } from '../../services/scenario.service';
 import { WorkflowService } from '../../services/workflow.service';
@@ -11,7 +12,7 @@ type VisitStatus = 'completed' | 'in-progress' | 'not-started';
 @Component({
   selector: 'app-scenario-wizard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './scenario-wizard.component.html',
   styleUrl: './scenario-wizard.component.scss'
 })
@@ -33,6 +34,22 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
   facilityVisit: { id: string; title: string; pasoId: string } | null = null;
   facilityRating = 0;
   facilityComment = '';
+
+  // SUS questionnaire
+  showSusModal = false;
+  susAnswers: number[] = new Array(10).fill(0);
+  readonly susQuestions = [
+    'Creo que me gustaría usar este sistema con frecuencia.',
+    'Encontré el sistema innecesariamente complejo.',
+    'Pensé que el sistema era fácil de usar.',
+    'Creo que necesitaría el apoyo de un técnico para poder usar este sistema.',
+    'Encontré que las diversas funciones del sistema estaban bien integradas.',
+    'Pensé que había demasiada inconsistencia en este sistema.',
+    'Imagino que la mayoría de las personas aprendería a usar este sistema muy rápidamente.',
+    'Encontré el sistema muy incómodo de usar.',
+    'Me sentí muy seguro/a usando el sistema.',
+    'Necesité aprender muchas cosas antes de poder empezar a usar este sistema.'
+  ];
   private facilityQueue: { id: string; title: string; pasoId: string }[] = [];
   private blockCompletionModal = false;
   private prevCompletedVisits: string[] = [];
@@ -483,8 +500,71 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
     this.showCompletionModal = false;
     this.completionSummary = null;
     this.completionTwinSummary = null;
+    const completedCount = Object.values(this.scenarioStates).filter(s => s === 'completed').length;
+    const susDone = !!localStorage.getItem('sus_results');
+    if (completedCount === 4 && !susDone) {
+      this.showSusModal = true;
+      return;
+    }
     this.readyForNext.emit();
     this.router.navigate(['/']);
+  }
+
+  setSusAnswer(index: number, value: number): void {
+    const copy = [...this.susAnswers];
+    copy[index] = value;
+    this.susAnswers = copy;
+  }
+
+  get susFormValid(): boolean {
+    return this.susAnswers.every(a => a >= 1 && a <= 5);
+  }
+
+  getSusScore(): number {
+    let total = 0;
+    for (let i = 0; i < 10; i++) {
+      total += i % 2 === 0 ? (this.susAnswers[i] - 1) : (5 - this.susAnswers[i]);
+    }
+    return total * 2.5;
+  }
+
+  getSusLabel(score: number): string {
+    if (score >= 85) return 'Excelente';
+    if (score >= 71) return 'Bueno';
+    if (score >= 52) return 'Promedio';
+    return 'Deficiente';
+  }
+
+  submitSus(): void {
+    const score = this.getSusScore();
+    localStorage.setItem('sus_results', JSON.stringify({
+      answers: [...this.susAnswers],
+      score,
+      label: this.getSusLabel(score),
+      completedAt: new Date().toISOString()
+    }));
+    this.showSusModal = false;
+    this.susAnswers = new Array(10).fill(0);
+    this.readyForNext.emit();
+    this.router.navigate(['/analisis']);
+  }
+
+  skipSus(): void {
+    this.showSusModal = false;
+    this.readyForNext.emit();
+    this.router.navigate(['/']);
+  }
+
+  triggerQuickExport(): void {
+    const summaries = Object.values(this.summaryByScenarioId).filter(Boolean);
+    const payload = { exportedAt: new Date().toISOString(), type: 'quick-backup', scenarios: summaries };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup-sesion-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   get completionTwinLabel(): string {

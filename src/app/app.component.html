@@ -8,7 +8,7 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" [routerLink]="'/'" routerLinkActive="active">Inicio</a></li>
         <li class="nav-item"><a class="nav-link" [routerLink]="'/pacientes'" routerLinkActive="active">Pacientes</a></li>
-        <li class="nav-item"><a class="nav-link" [routerLink]="'/flujos'" routerLinkActive="active">Protocolos</a></li>
+        <li class="nav-item" *ngIf="!scenarioActive"><a class="nav-link" [routerLink]="'/flujos'" routerLinkActive="active">Protocolos</a></li>
         <li class="nav-item"><a class="nav-link" [routerLink]="'/evaluacion'" routerLinkActive="active">Evaluación</a></li>
         <li class="nav-item" *ngIf="!scenarioActive"><a class="nav-link" [routerLink]="'/analisis'" routerLinkActive="active">Análisis Nutricional</a></li>
         <li class="nav-item" *ngIf="!scenarioActive"><a class="nav-link" [routerLink]="'/seguimiento'" routerLinkActive="active">Seguimiento</a></li>

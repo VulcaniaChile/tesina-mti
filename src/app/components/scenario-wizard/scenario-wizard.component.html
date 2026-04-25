@@ -279,6 +279,9 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="triggerQuickExport()" title="Guardar copia de seguridad">
+            <i class="fas fa-download me-1"></i>Exportar copia
+          </button>
           <button type="button" class="btn btn-secondary" (click)="closeCompletionModal()">Cerrar</button>
         </div>
       </div>
@@ -312,6 +315,11 @@
             <span>Muy difícil</span>
             <span>Muy fácil</span>
           </div>
+          <div class="mt-3">
+            <label class="form-label small text-muted">Comentario opcional</label>
+            <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="facilityComment"
+                      placeholder="¿Algo que destacar de esta fase?"></textarea>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-link text-muted" (click)="skipFacilityRating()">Omitir</button>
@@ -322,3 +330,39 @@
   </div>
   <div class="modal-backdrop fade show facility-modal-backdrop" *ngIf="showFacilityModal"></div>
 </div>
+
+<!-- SUS questionnaire modal (shown after all 4 scenarios complete) -->
+<div class="modal fade" tabindex="-1" [class.show]="showSusModal" [style.display]="showSusModal ? 'block' : 'none'" *ngIf="showSusModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-clipboard-check me-2"></i>
+          Cuestionario de Usabilidad (SUS)
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-4">Has completado todas las sesiones. Por favor responde las siguientes preguntas sobre tu experiencia con el sistema. Escala: 1 = Muy en desacuerdo, 5 = Muy de acuerdo.</p>
+        <div *ngFor="let q of susQuestions; let i = index" class="mb-4">
+          <p class="fw-semibold mb-2">{{ i + 1 }}. {{ q }}</p>
+          <div class="d-flex gap-2 align-items-center">
+            <small class="text-muted me-1">En desacuerdo</small>
+            <button *ngFor="let v of [1,2,3,4,5]" type="button"
+                    class="btn btn-sm"
+                    [class.btn-primary]="susAnswers[i] === v"
+                    [class.btn-outline-secondary]="susAnswers[i] !== v"
+                    (click)="setSusAnswer(i, v)">{{ v }}</button>
+            <small class="text-muted ms-1">De acuerdo</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-link text-muted" (click)="skipSus()">Omitir</button>
+        <button type="button" class="btn btn-primary btn-lg" (click)="submitSus()" [disabled]="!susFormValid">
+          <i class="fas fa-check me-2"></i>Enviar respuestas
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showSusModal"></div>

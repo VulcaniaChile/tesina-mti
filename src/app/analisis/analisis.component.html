@@ -13,7 +13,20 @@
           <button class="btn btn-outline-success btn-sm" (click)="exportCSV()" title="Exportar CSV">
             <i class="fas fa-file-csv me-1"></i>CSV
           </button>
+          <button class="btn btn-outline-primary btn-sm" (click)="printReport()" title="Generar informe imprimible">
+            <i class="fas fa-print me-1"></i>Informe
+          </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data backup warning -->
+  <div class="row mb-3" *ngIf="completedCount > 0">
+    <div class="col-12">
+      <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <small>Los datos se almacenan únicamente en este navegador. <strong>Exporta CSV o JSON</strong> antes de cerrar o limpiar el historial del navegador.</small>
       </div>
     </div>
   </div>
