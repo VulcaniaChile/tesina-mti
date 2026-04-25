@@ -98,7 +98,9 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
           ) {
             const lastVisit = this.lastKnownScenario.visits[this.lastKnownScenario.visits.length - 1];
             const pasoId = lastVisit?.completionPasoIds?.[0] ?? lastVisit.id;
-            this.facilityQueue.push({ id: lastVisit.id, title: lastVisit.title, pasoId });
+            if (!this.scenarioService.hasFacilityRating(this.lastActiveScenarioId!, pasoId)) {
+              this.facilityQueue.push({ id: lastVisit.id, title: lastVisit.title, pasoId });
+            }
             this.blockCompletionModal = true;
           }
           this.prevCompletedVisits = [];
@@ -137,7 +139,7 @@ export class ScenarioWizardComponent implements OnInit, OnDestroy {
             for (const visitId of newlyCompleted) {
               const visit = this.currentScenario.visits.find(v => v.id === visitId);
               const pasoId = visit?.completionPasoIds?.[0] ?? visitId;
-              if (visit) {
+              if (visit && !this.scenarioService.hasFacilityRating(progress.scenarioId, pasoId)) {
                 this.facilityQueue.push({ id: visitId, title: visit.title, pasoId });
               }
             }

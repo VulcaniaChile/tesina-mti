@@ -39,6 +39,10 @@ export class AppComponent {
     this.showStartModal = false;
   }
 
+  dismissStartModal(): void {
+    this.showStartModal = false;
+  }
+
   getEstimatedTime(scenario: ScenarioDefinition): number {
     return scenario.visits.reduce((sum, v) => sum + v.targetMinutes, 0);
   }

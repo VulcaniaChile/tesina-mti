@@ -77,6 +77,7 @@ export class ScenarioService {
   private readonly STORAGE_PROGRESS = 'scenario_progress';
   private readonly STORAGE_SUMMARIES = 'scenario_summaries';
   private readonly STORAGE_HISTORY = `${this.STORAGE_PROGRESS}_history`;
+  private readonly STORAGE_CLICKS = 'scenario_active_clicks';
   private activeScenarioClickCount = 0;
 
   private readonly scenarios: ScenarioDefinition[] = [
@@ -186,6 +187,10 @@ export class ScenarioService {
     private versionService: VersionService
   ) {
     this.document.addEventListener('click', this.handleDocumentClick, true);
+    // Restore click counter if there is an in-progress scenario (survives page refresh)
+    if (this.activeProgressSubject.value) {
+      this.activeScenarioClickCount = this.loadFromStorage<number>(this.STORAGE_CLICKS, 0);
+    }
     this.workflowService.asignaciones$.subscribe(() => {
       this.syncProgressWithWorkflow();
     });
@@ -215,6 +220,17 @@ export class ScenarioService {
 
   getActiveClickCount(): number {
     return this.activeScenarioClickCount;
+  }
+
+  hasFacilityRating(scenarioId: ScenarioId, pasoId: string): boolean {
+    try {
+      const scenario = this.getScenario(scenarioId);
+      const asignacion = this.getLatestScenarioAssignment(scenario.patientId, scenario.flujoId);
+      if (!asignacion) return false;
+      return asignacion.ejecucion.some(e => e.pasoId === pasoId && typeof e.facilidad === 'number');
+    } catch {
+      return false;
+    }
   }
 
   getLatestAssignmentId(patientId: string, flujoId: string): string | null {
@@ -250,6 +266,7 @@ export class ScenarioService {
 
     states[id] = 'in-progress';
     this.activeScenarioClickCount = 0;
+    this.saveToStorage(this.STORAGE_CLICKS, 0);
     const progress: ActiveScenarioProgress = {
       scenarioId: id,
       visitId: scenario.visits[0].id,
@@ -268,12 +285,14 @@ export class ScenarioService {
     this.persistStates(states);
     if (this.activeProgressSubject.value?.scenarioId === id) {
       this.activeScenarioClickCount = 0;
+      this.saveToStorage(this.STORAGE_CLICKS, 0);
       this.persistProgress(null);
     }
   }
 
   resetAllScenarios(): void {
     this.activeScenarioClickCount = 0;
+    this.saveToStorage(this.STORAGE_CLICKS, 0);
     const defaults = this.getDefaultStates();
     this.persistStates(defaults);
     this.persistProgress(null);
@@ -444,6 +463,7 @@ export class ScenarioService {
     });
     this.saveToStorage(this.STORAGE_HISTORY, history);
     this.activeScenarioClickCount = 0;
+    this.saveToStorage(this.STORAGE_CLICKS, 0);
     this.captureScenarioSummary(scenario, completedVisits);
   }
 
@@ -669,5 +689,6 @@ export class ScenarioService {
       return;
     }
     this.activeScenarioClickCount += 1;
+    this.saveToStorage(this.STORAGE_CLICKS, this.activeScenarioClickCount);
   };
 }
