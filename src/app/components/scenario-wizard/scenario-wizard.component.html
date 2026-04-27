@@ -136,6 +136,17 @@
         <p class="phase-hint">{{ getVisitActionHint(currentVisit.id) }}</p>
       </div>
 
+      <!-- Instructions -->
+      <div class="visit-details" *ngIf="currentVisit">
+        <h6>Instrucciones de la fase</h6>
+        <ul>
+          <li *ngFor="let instruction of currentVisit.instructions">{{ instruction }}</li>
+        </ul>
+        <p class="text-muted small mb-0">
+          Completa las acciones en el módulo indicado para avanzar automáticamente.
+        </p>
+      </div>
+
       <!-- Visit progress list -->
       <div class="visit-progress">
         <div class="visit"
@@ -177,17 +188,6 @@
           <span *ngIf="currentScenario?.patientPreset.masaMagra">M. magra {{ currentScenario?.patientPreset.masaMagra }} kg</span>
         </div>
         <small *ngIf="currentScenario?.patientPreset.notas" class="text-muted d-block mt-1">{{ currentScenario?.patientPreset.notas }}</small>
-      </div>
-
-      <!-- Instructions -->
-      <div class="visit-details" *ngIf="currentVisit">
-        <h6>Instrucciones de la fase</h6>
-        <ul>
-          <li *ngFor="let instruction of currentVisit.instructions">{{ instruction }}</li>
-        </ul>
-        <p class="text-muted small mb-0">
-          Completa las acciones en el módulo indicado para avanzar automáticamente.
-        </p>
       </div>
 
       <div class="summary" *ngIf="!currentVisit">
