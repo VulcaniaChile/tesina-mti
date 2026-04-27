@@ -107,22 +107,6 @@
         <button class="btn btn-link btn-sm text-danger p-0 align-self-start" (click)="resetScenario(currentScenario!.id)">Cancelar</button>
       </div>
 
-      <!-- Patient preset data -->
-      <div class="preset-banner" *ngIf="currentScenario?.patientPreset">
-        <p class="preset-banner-label">Datos del paciente</p>
-        <div class="preset-grid">
-          <span>Edad {{ currentScenario?.patientPreset.edad }} años</span>
-          <span>Peso {{ currentScenario?.patientPreset.peso }} kg</span>
-          <span>Altura {{ currentScenario?.patientPreset.altura }} cm</span>
-          <span>Actividad {{ currentScenario?.patientPreset.actividad | titlecase }}</span>
-          <span>Objetivo {{ currentScenario?.patientPreset.objetivo | titlecase }}</span>
-          <span *ngIf="currentScenario?.patientPreset.masaGrasa">M. grasa {{ currentScenario?.patientPreset.masaGrasa }} kg</span>
-          <span *ngIf="currentScenario?.patientPreset.masaMagra">M. magra {{ currentScenario?.patientPreset.masaMagra }} kg</span>
-        </div>
-        <small *ngIf="currentScenario?.patientPreset.notas" class="text-muted d-block mt-1">{{ currentScenario?.patientPreset.notas }}</small>
-      </div>
-
-      <!-- Live metrics -->
       <div class="live-metrics">
         <div class="metric-pill">
           <span class="metric-label">Tiempo</span>
@@ -144,22 +128,34 @@
         Ir a {{ currentVisit.route | titlecase }}
       </button>
 
-      <!-- Current phase card -->
-      <div class="current-phase-card" *ngIf="currentVisit">
-        <p class="phase-eyebrow">Fase actual</p>
-        <strong class="phase-title">{{ getCurrentPhaseTitle() }}</strong>
-        <p class="phase-hint">{{ getVisitActionHint(currentVisit.id) }}</p>
-      </div>
-
-      <!-- Instructions -->
-      <div class="visit-details" *ngIf="currentVisit">
-        <h6>Instrucciones de la fase</h6>
-        <ul>
-          <li *ngFor="let instruction of currentVisit.instructions">{{ instruction }}</li>
-        </ul>
-        <p class="text-muted small mb-0">
-          Completa las acciones en el módulo indicado para avanzar automáticamente.
-        </p>
+      <!-- Current phase card + unified instructions -->
+      <div class="phase-instructions-card" *ngIf="currentVisit && currentScenario?.patientPreset">
+        <div class="pic-phase-header">
+          <p class="pic-eyebrow">Fase actual</p>
+          <strong class="pic-phase-title">{{ getCurrentPhaseTitle() }}</strong>
+          <p class="pic-phase-hint">{{ getVisitActionHint(currentVisit.id) }}</p>
+        </div>
+        <div class="pic-divider"></div>
+        <div class="pic-section pic-section--patient">
+          <p class="pic-eyebrow"><i class="fas fa-user me-1"></i>Datos a ingresar</p>
+          <div class="pic-patient-grid">
+            <span><strong>Edad</strong> {{ currentScenario?.patientPreset.edad }} años</span>
+            <span><strong>Peso</strong> {{ currentScenario?.patientPreset.peso }} kg</span>
+            <span><strong>Altura</strong> {{ currentScenario?.patientPreset.altura }} cm</span>
+            <span><strong>Actividad</strong> {{ currentScenario?.patientPreset.actividad | titlecase }}</span>
+            <span><strong>Objetivo</strong> {{ currentScenario?.patientPreset.objetivo | titlecase }}</span>
+            <span *ngIf="currentScenario?.patientPreset.masaGrasa"><strong>M. grasa</strong> {{ currentScenario?.patientPreset.masaGrasa }} kg</span>
+            <span *ngIf="currentScenario?.patientPreset.masaMagra"><strong>M. magra</strong> {{ currentScenario?.patientPreset.masaMagra }} kg</span>
+          </div>
+          <p *ngIf="currentScenario?.patientPreset.notas" class="pic-notes">{{ currentScenario?.patientPreset.notas }}</p>
+        </div>
+        <div class="pic-divider"></div>
+        <div class="pic-section">
+          <p class="pic-eyebrow"><i class="fas fa-tasks me-1"></i>Acciones de esta fase</p>
+          <ul class="pic-steps">
+            <li *ngFor="let instruction of currentVisit.instructions">{{ instruction }}</li>
+          </ul>
+        </div>
       </div>
 
       <!-- Visit progress list -->

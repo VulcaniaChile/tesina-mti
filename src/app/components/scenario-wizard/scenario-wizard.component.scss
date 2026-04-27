@@ -465,6 +465,84 @@
   }
 }
 
+// Unified phase instructions + patient data card
+.phase-instructions-card {
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  background: #f8f9ff;
+  overflow: hidden;
+}
+
+.pic-phase-header {
+  padding: 0.75rem 1rem 0.6rem;
+  background: #eef2ff;
+}
+
+.pic-phase-title {
+  display: block;
+  font-size: 0.95rem;
+  color: #1e293b;
+  margin: 0.1rem 0 0.25rem;
+}
+
+.pic-phase-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.pic-divider {
+  height: 1px;
+  background: #c7d2fe;
+}
+
+.pic-section {
+  padding: 0.65rem 1rem;
+}
+
+.pic-section--patient {
+  background: #fff;
+}
+
+.pic-eyebrow {
+  margin: 0 0 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #6366f1;
+}
+
+.pic-patient-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  color: #334155;
+
+  strong {
+    color: #1e293b;
+    font-weight: 600;
+  }
+}
+
+.pic-notes {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.pic-steps {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: #1e293b;
+}
+
 .scenario-results {
   margin-top: 1.5rem;
   display: flex;
