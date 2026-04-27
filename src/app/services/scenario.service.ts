@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Inject, Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { VersionMode, ScenarioPatientPreset, OrdenValidacion, FlujoTrabajo, FlujoAsignado } from '../models/nutricion.models';
 import { DataService } from './data.service';
 import { WorkflowService } from './workflow.service';
@@ -179,6 +179,13 @@ export class ScenarioService {
 
   private scenarioSummariesSubject = new BehaviorSubject<Record<ScenarioId, ScenarioRunSummary | null>>(this.loadScenarioSummaries());
   scenarioSummaries$ = this.scenarioSummariesSubject.asObservable();
+
+  private experimentStartedSubject = new Subject<void>();
+  experimentStarted$ = this.experimentStartedSubject.asObservable();
+
+  signalExperimentStart(): void {
+    this.experimentStartedSubject.next();
+  }
 
   constructor(
     @Inject(DOCUMENT) private document: Document,

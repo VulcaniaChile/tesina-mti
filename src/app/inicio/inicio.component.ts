@@ -71,6 +71,7 @@ export class InicioComponent implements OnInit, OnDestroy {
     }));
     this.showExperimentModal = false;
     localStorage.setItem('experiment_modal_seen', 'true');
+    this.scenarioService.signalExperimentStart();
   }
 
   getPacientesSinFlujo(): Paciente[] {
