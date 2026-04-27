@@ -214,10 +214,26 @@
           Todos los datos recopilados son anónimos y se utilizarán exclusivamente con fines académicos.
           Tu participación es voluntaria y puedes detenerte en cualquier momento.
         </p>
+
+        <h5 class="fw-semibold mb-3 mt-4">Identificación del participante</h5>
+        <p class="text-muted small mb-3">Tus datos se incluirán en los archivos de resultados para vincular las métricas con tu perfil.</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="participantNombre"
+                   placeholder="Ej: María" autocomplete="given-name">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="participantApellido"
+                   placeholder="Ej: González" autocomplete="family-name">
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer justify-content-center pb-4">
-        <button type="button" class="btn btn-primary btn-lg px-5" (click)="closeExperimentModal()">
+        <button type="button" class="btn btn-primary btn-lg px-5" (click)="closeExperimentModal()"
+                [disabled]="!participantNombre.trim() || !participantApellido.trim()">
           <i class="fas fa-check-circle me-2"></i>
           Entendido, comenzar
         </button>

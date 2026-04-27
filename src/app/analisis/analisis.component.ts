@@ -180,6 +180,7 @@ export class AnalisisComponent implements OnInit {
   exportJSON(): void {
     const payload = {
       exportedAt: new Date().toISOString(),
+      participant: this.participantInfo,
       scenarios: this.sortedSummaries.map(s => ({
         ...s,
         visitComments: this.getVisitComments(s.scenarioId)
@@ -199,6 +200,7 @@ export class AnalisisComponent implements OnInit {
 
   exportCSV(): void {
     const headers = [
+      'participante',
       'scenarioId', 'mode', 'patientName',
       'tiempoTotalMin', 'tiempoPromedioMin',
       'facilidadPromedio', 'interaccionesTotal', 'clicksPromedio',
@@ -211,6 +213,7 @@ export class AnalisisComponent implements OnInit {
         .map(c => c.comentario.replace(/,/g, ';'))
         .join(' | ');
       return [
+        `"${this.participantLabel}"`,
         s.scenarioId, s.mode, s.patientName,
         s.tiempoTotalMin ?? '', s.tiempoPromedioMin ?? '',
         s.facilidadPromedio ?? '', s.interaccionesTotal ?? '', s.clicksPromedio ?? '',
@@ -245,6 +248,18 @@ export class AnalisisComponent implements OnInit {
       const raw = localStorage.getItem('sus_results');
       return raw ? JSON.parse(raw) : null;
     } catch { return null; }
+  }
+
+  get participantInfo(): { nombre: string; apellido: string; registeredAt: string } | null {
+    try {
+      const raw = localStorage.getItem('participant_info');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  get participantLabel(): string {
+    const p = this.participantInfo;
+    return p ? `${p.nombre} ${p.apellido}` : 'Sin identificar';
   }
 
   readonly susQuestionTexts = [
@@ -291,6 +306,9 @@ export class AnalisisComponent implements OnInit {
   printReport(): void {
     const sus = this.susResult;
     const date = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });
+    const participantHeader = this.participantInfo
+      ? `<p class="meta">Participante: <strong>${this.participantInfo.nombre} ${this.participantInfo.apellido}</strong></p>`
+      : '';
     const scenarioRows = this.sortedSummaries.map(s => `
       <tr>
         <td>${s.scenarioId}</td><td>${s.patientName}</td>
@@ -326,6 +344,7 @@ export class AnalisisComponent implements OnInit {
       </head><body>
       <h1>Informe de Resultados — Estudio Comparativo</h1>
       <p class="meta">Generado el ${date}</p>
+      ${participantHeader}
       <section><h2>Resumen por sesión</h2>
       <table><thead><tr><th>ID</th><th>Paciente</th><th>Modalidad</th><th>Tiempo</th><th>Interacciones</th><th>Facilidad</th><th>Auto/Manual</th></tr></thead>
       <tbody>${scenarioRows}</tbody></table></section>

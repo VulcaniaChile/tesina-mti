@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DataService } from '../services/data.service';
@@ -10,7 +11,7 @@ import { Paciente } from '../models/nutricion.models';
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './inicio.component.html',
   styles: []
 })
@@ -20,6 +21,8 @@ export class InicioComponent implements OnInit, OnDestroy {
   lastCompletedTitle: string | null = null;
   allScenariosCompleted = false;
   showExperimentModal = false;
+  participantNombre = '';
+  participantApellido = '';
   private scenarioSub: Subscription | null = null;
   private activeProgressSub: Subscription | null = null;
 
@@ -58,6 +61,14 @@ export class InicioComponent implements OnInit, OnDestroy {
   }
 
   closeExperimentModal() {
+    const nombre = this.participantNombre.trim();
+    const apellido = this.participantApellido.trim();
+    if (!nombre || !apellido) return;
+    localStorage.setItem('participant_info', JSON.stringify({
+      nombre,
+      apellido,
+      registeredAt: new Date().toISOString()
+    }));
     this.showExperimentModal = false;
     localStorage.setItem('experiment_modal_seen', 'true');
   }
