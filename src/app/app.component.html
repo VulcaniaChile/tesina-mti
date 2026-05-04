@@ -56,6 +56,11 @@
       (scenarioChange)="onScenarioChange($event)"
       (readyForNext)="onReadyForNext()">
     </app-scenario-wizard>
+    <div class="reset-panel">
+      <button class="btn btn-danger w-100" (click)="resetAll()">
+        <i class="fas fa-rotate-left me-1"></i> Reiniciar todo
+      </button>
+    </div>
   </aside>
 </div>
 <footer class="bg-dark text-white text-center py-3 mt-0">
@@ -83,10 +88,6 @@
       </div>
       <div class="modal-body start-modal-body">
         <div class="start-info-grid">
-          <div class="info-block">
-            <span class="info-block-label">Duración estimada</span>
-            <strong>{{ getEstimatedTime(nextScenario) }} min</strong>
-          </div>
           <div class="info-block">
             <span class="info-block-label">Fases</span>
             <strong>{{ nextScenario.visits.length }}</strong>

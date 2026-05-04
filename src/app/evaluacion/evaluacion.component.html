@@ -199,6 +199,26 @@
                 </div>
               </div>
 
+              <div class="alert alert-secondary small" role="note">
+                <h6 class="mb-2">
+                  <i class="fas fa-circle-info me-2"></i>
+                  Formula usada para calcular macros
+                </h6>
+                <p class="mb-1"><strong>1) Calorias:</strong> TMB Harris-Benedict: 88.362 + (13.397 x peso kg) + (4.799 x altura cm) - (5.677 x edad). Luego se multiplica por actividad (sedentario 1.2, ligero 1.375, moderado 1.55, intenso 1.725) y se ajusta por objetivo (-500 perder, +500 ganar).</p>
+                <p class="mb-1"><strong>2) Proteina:</strong> base proteica = masa magra (si existe) o (peso - masa grasa). Factor por objetivo: 1.6 g/kg perder, 1.4 g/kg mantener, 1.8 g/kg ganar.</p>
+                <p class="mb-0"><strong>3) Grasa y carbohidrato:</strong> grasa = 35% de las calorias restantes tras proteina, y carbohidratos = calorias restantes finales / 4.</p>
+
+                <ng-container *ngIf="macroCalculationBreakdown as calc">
+                  <hr class="my-2" />
+                  <p class="mb-1"><strong>Aplicado a este paciente:</strong></p>
+                  <p class="mb-1">TMB = 88.362 + (13.397 x {{ calc.peso | number:'1.0-1' }}) + (4.799 x {{ calc.altura | number:'1.0-1' }}) - (5.677 x {{ calc.edad }}) = <strong>{{ calc.tmb | number:'1.0-0' }}</strong> kcal.</p>
+                  <p class="mb-1">Calorias objetivo = {{ calc.tmb | number:'1.0-0' }} x {{ calc.factorActividad }} ({{ calc.actividadLabel }}) {{ calc.ajusteObjetivo >= 0 ? '+' : '-' }} {{ Math.abs(calc.ajusteObjetivo) }} = <strong>{{ calc.caloriasObjetivo | number:'1.0-0' }}</strong> kcal.</p>
+                  <p class="mb-1">Proteina = {{ calc.proteinaBase | number:'1.0-1' }} kg ({{ calc.proteinaBaseOrigen }}) x {{ calc.proteinasPorKg }} = <strong>{{ calc.proteinasDia }}</strong> g/dia.</p>
+                  <p class="mb-1">Grasa = ({{ calc.caloriasPostProteina | number:'1.0-0' }} x 0.35) / 9 = <strong>{{ calc.grasasDia }}</strong> g/dia.</p>
+                  <p class="mb-0">Carbohidratos = ({{ calc.caloriasObjetivo | number:'1.0-0' }} - {{ calc.proteinasDia }}x4 - {{ calc.grasasDia }}x9) / 4 = <strong>{{ calc.carbohidratosDia }}</strong> g/dia.</p>
+                </ng-container>
+              </div>
+
               <div class="alert alert-info">
                 <h6>
                   <i class="fas fa-clipboard-check me-2"></i>
@@ -614,6 +634,10 @@
         <div class="modal-body">
           <ng-container *ngIf="iaHelpFlowStep === 1; else wizardStepTwo">
             <p class="text-muted mb-3">Primero aplicamos una distribución base de macros en un clic (equivalente a "Distribuir macros IA").</p>
+            <div class="alert alert-secondary mb-3 py-2 small">
+              <i class="fas fa-circle-question me-2"></i>
+              <strong>¿Qué es la distribución base?</strong> Es un reparto inicial de proteínas, grasas e hidratos calculado automáticamente según las calorías objetivo del paciente. Sirve como punto de partida equilibrado para que puedas ajustar a continuación sin empezar desde cero.
+            </div>
             <div class="alert alert-primary mb-2">
               <i class="fas fa-bolt me-2"></i>
               Se asignarán porciones automáticamente en {{ getRequiredMealNamesLabel() }} para arrancar con una pauta utilizable.

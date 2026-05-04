@@ -149,13 +149,6 @@
           </div>
           <p *ngIf="currentScenario?.patientPreset.notas" class="pic-notes">{{ currentScenario?.patientPreset.notas }}</p>
         </div>
-        <div class="pic-divider"></div>
-        <div class="pic-section">
-          <p class="pic-eyebrow"><i class="fas fa-tasks me-1"></i>Acciones de esta fase</p>
-          <ul class="pic-steps">
-            <li *ngFor="let instruction of currentVisit.instructions">{{ instruction }}</li>
-          </ul>
-        </div>
       </div>
 
       <!-- Visit progress list -->

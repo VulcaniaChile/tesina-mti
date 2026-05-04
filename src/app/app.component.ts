@@ -67,4 +67,13 @@ export class AppComponent implements OnInit, OnDestroy {
   getEstimatedTime(scenario: ScenarioDefinition): number {
     return scenario.visits.reduce((sum, v) => sum + v.targetMinutes, 0);
   }
+
+  resetAll(): void {
+    if (!confirm('¿Seguro que quieres reiniciar todo el estudio? Se perderá todo el progreso.')) { return; }
+    this.scenarioService.resetAllScenarios();
+    this.scenarioActive = false;
+    this.showStartModal = false;
+    this.nextScenario = null;
+    this.router.navigate(['/']);
+  }
 }

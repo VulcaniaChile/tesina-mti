@@ -1423,6 +1423,88 @@ export class EvaluacionComponent implements OnInit {
     return null;
   }
 
+  get macroCalculationBreakdown(): {
+    edad: number;
+    peso: number;
+    altura: number;
+    tmb: number;
+    factorActividad: number;
+    actividadLabel: string;
+    caloriasBase: number;
+    ajusteObjetivo: number;
+    caloriasObjetivo: number;
+    proteinaBase: number;
+    proteinaBaseOrigen: string;
+    proteinasPorKg: number;
+    proteinasDia: number;
+    caloriasPostProteina: number;
+    grasasDia: number;
+    carbohidratosDia: number;
+  } | null {
+    const edad = this.obtenerEdadReferencia();
+    const peso = parseFloat(this.paciente.peso);
+    const altura = parseFloat(this.paciente.altura);
+
+    if (!edad || edad <= 0 || !peso || peso <= 0 || !altura || altura <= 0) {
+      return null;
+    }
+
+    const factorActividad = {
+      sedentario: 1.2,
+      ligero: 1.375,
+      moderado: 1.55,
+      intenso: 1.725
+    } as const;
+
+    const actividadActual = this.paciente.actividad as keyof typeof factorActividad;
+    const factor = factorActividad[actividadActual] ?? 1.2;
+    const tmb = 88.362 + (13.397 * peso) + (4.799 * altura) - (5.677 * edad);
+    const caloriasBase = tmb * factor;
+
+    const ajusteObjetivo = this.paciente.objetivo === 'perder'
+      ? -500
+      : this.paciente.objetivo === 'ganar'
+        ? 500
+        : 0;
+    const caloriasObjetivo = caloriasBase + ajusteObjetivo;
+
+    const masaMagra = parseFloat(this.paciente.masaMagra || '0');
+    const masaGrasa = parseFloat(this.paciente.masaGrasa || '0');
+    const usaMasaMagra = masaMagra > 0;
+    const proteinaBase = usaMasaMagra ? masaMagra : Math.max(0, peso - masaGrasa);
+    const proteinaBaseOrigen = usaMasaMagra ? 'masa magra' : 'peso - masa grasa';
+
+    const proteinasPorKg = this.paciente.objetivo === 'ganar'
+      ? 1.8
+      : this.paciente.objetivo === 'perder'
+        ? 1.6
+        : 1.4;
+    const proteinasDia = Math.max(0, Math.round(proteinaBase * proteinasPorKg));
+
+    const caloriasPostProteina = Math.max(0, caloriasObjetivo - proteinasDia * 4);
+    const grasasDia = Math.round((caloriasPostProteina * 0.35) / 9);
+    const carbohidratosDia = Math.max(0, Math.round((caloriasObjetivo - proteinasDia * 4 - grasasDia * 9) / 4));
+
+    return {
+      edad,
+      peso,
+      altura,
+      tmb,
+      factorActividad: factor,
+      actividadLabel: this.traducirActividad(actividadActual),
+      caloriasBase,
+      ajusteObjetivo,
+      caloriasObjetivo,
+      proteinaBase,
+      proteinaBaseOrigen,
+      proteinasPorKg,
+      proteinasDia,
+      caloriasPostProteina,
+      grasasDia,
+      carbohidratosDia
+    };
+  }
+
   generarRecomendacionesBasicas(): string {
     const masaMagra = parseFloat(this.paciente.masaMagra || '0');
     const proteinasObjetivo = masaMagra > 0 ? Math.round(masaMagra * 1.6) : Math.round(parseFloat(this.paciente.peso || '0') * 1.2);
