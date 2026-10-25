@@ -1,0 +1,20 @@
+services:
+  tesina-mti:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tesina-mti:latest
+    container_name: tesina-mti
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+    networks:
+      - default
+      - tumetaclub-network
+
+networks:
+  default:
+    driver: bridge
+  tumetaclub-network:
+    name: tumetaclub_tumetaclub-network
+    external: true
